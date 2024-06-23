@@ -9,12 +9,12 @@ use commands::Commands;
 #[command(version)]
 #[command(next_line_help = true)]
 pub struct Cli {
-    #[command(subcommand)]
-    pub command: Commands,
+  #[command(subcommand)]
+  pub command: Commands,
 }
 
 impl Cli {
-    pub fn new() -> Self {
-        Cli::parse()
-    }
+  pub fn new() -> Self {
+    Cli::parse()
+  }
 }
