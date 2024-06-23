@@ -4,7 +4,7 @@ mod commands;
 use commands::Commands;
 
 #[derive(Parser, Debug)]
-#[command(author = "Viktor Stamoff")]
+#[command(author = "0x56696B")]
 #[command(about = "A git extension to make `git worktree` easier to use", long_about = None)]
 #[command(version)]
 #[command(next_line_help = true)]
