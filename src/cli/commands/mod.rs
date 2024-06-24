@@ -1,3 +1,5 @@
+pub mod add;
+
 use clap::{Args, Subcommand};
 
 #[derive(Debug, Clone, Subcommand)]
@@ -28,11 +30,19 @@ pub struct RmArgs {}
 /// Configure per-repo helpers and specfic behaviors
 #[derive(Args, Debug, Clone)]
 pub struct ConfigArgs {
-  /// Commands to run after every successfull new worktree
+  /// Configure commands to run after every successfull new worktree. Automatically ran after
+  /// `git-wt add`
+  #[arg(short, long)]
   create_commands: Vec<String>,
 
-  /// Commands to run after every successfull worktree removal
+  /// Configure commands to run after every successfull worktree removal. Automatically ran after
+  /// `git-wt rm`
+  #[arg(short, long)]
   remove_commands: Vec<String>,
+
+  /// Configure commands to run to open a worktree
+  #[arg(short, long)]
+  open_commands: Vec<String>,
 }
 
 /// Custom commands to execute to open the new worktree

@@ -1,9 +1,16 @@
 mod cli;
 
-use cli::Cli;
+use cli::{
+  commands::{add::add_command, Commands},
+  Cli,
+};
 
 fn main() {
   let args = Cli::new();
-
-  println!("Hello {:?}!", args.command);
+  match args.command {
+    Commands::Add(args) => add_command(args),
+    Commands::Rm(args) => todo!(),
+    Commands::Config(args) => todo!(),
+    Commands::Open(args) => todo!(),
+  }
 }

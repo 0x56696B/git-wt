@@ -1,6 +1,6 @@
-use clap::Parser;
+pub mod commands;
 
-mod commands;
+use clap::Parser;
 use commands::Commands;
 
 #[derive(Parser, Debug)]
