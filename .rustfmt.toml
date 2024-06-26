@@ -1,9 +1,11 @@
-# Order imports
 reorder_imports = true
 
-# Use spaces for indentation
 hard_tabs = false
 
-# Set the number of spaces per indentation level
 indent_style = "Block"
 tab_spaces = 2
+
+trailing_comma = "Always"
+
+# Implicit returns
+use_small_heuristics = "Max"
