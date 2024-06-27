@@ -2,13 +2,14 @@ mod cli;
 mod helpers;
 
 use cli::{
-  commands::{add::add_command, Commands},
+  commands::{add::add_command, test::test_command, Commands},
   Cli,
 };
 
 fn main() {
   let args = Cli::new();
   let command_execution: Result<(), String> = match args.command {
+    Commands::Test(args) => test_command(args),
     Commands::Add(args) => add_command(args),
     Commands::Rm(_args) => todo!(),
     Commands::Config(_args) => todo!(),

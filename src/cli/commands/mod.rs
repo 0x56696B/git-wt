@@ -1,9 +1,11 @@
 pub mod add;
+pub mod test;
 
 use clap::{Args, Subcommand};
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
+  Test(TestArgs),
   Add(AddArgs),
   Rm(RmArgs),
   Config(ConfigArgs),
@@ -50,3 +52,8 @@ pub struct ConfigArgs {
 /// Example: `code ${new-worktree}` to open VSCode in a worktree
 #[derive(Args, Debug, Clone)]
 pub struct OpenArgs {}
+
+/// Development only
+/// Used for testing functionality while developing
+#[derive(Args, Debug, Clone)]
+pub struct TestArgs {}
