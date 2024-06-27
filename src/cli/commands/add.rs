@@ -3,23 +3,22 @@ use std::path::{Path, PathBuf};
 use git2::{Repository, Worktree, WorktreeAddOptions};
 
 use super::AddArgs;
-use crate::helpers::git::get_bare_git_repo;
+use crate::helpers::git::{get_bare_git_repo, get_default_worktree, ignored::get_ignored_files};
 
 /// Function to execute Command::Add
 pub fn add_command(args: AddArgs) -> Result<(), String> {
-  let bare_repo: Repository = match get_bare_git_repo() {
-    Ok(repo) => repo,
-    Err(err) => return Err(err),
-  };
+  let bare_repo = get_bare_git_repo().map_err(|e| e.to_string())?;
+  let worktree: Worktree =
+    create_new_worktree(&bare_repo, &args.new_branch_name.as_str()).map_err(|e| e.to_string())?;
 
-  let worktree = match create_new_worktree(bare_repo, &args.new_branch_name.as_str()) {
-    Ok(wt) => wt,
-    Err(e) => return Err(e),
-  };
+  println!("New Worktree Created: {:?}; Repo: {:?}", worktree.path(), bare_repo.path());
 
-  println!("New Worktree Created: {}", worktree.path().to_str().unwrap());
+  //TODO: Copy git ignored files from origin(main) branch
+  let main_branch_repo = get_default_worktree()?;
+  let ignored_files: Vec<String> =
+    get_ignored_files(&main_branch_repo).map_err(|e| e.to_string())?;
 
-  //TODO: Copy git ignored files
+  println!("ignored: {:?}", ignored_files);
 
   //TODO: Execute create config commands
   return Ok(());
@@ -33,7 +32,7 @@ fn join_path(path: &Path, extension: &str) -> PathBuf {
   return path.join(extension);
 }
 
-fn create_new_worktree(bare_repo: Repository, branch_name: &str) -> Result<Worktree, String> {
+fn create_new_worktree(bare_repo: &Repository, branch_name: &str) -> Result<Worktree, String> {
   let repo_path: &Path = bare_repo.path();
   let escaped_branch_name: String = escape_branch_name(branch_name);
   let new_worktree_path: PathBuf = join_path(repo_path, escaped_branch_name.as_str());

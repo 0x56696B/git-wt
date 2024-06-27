@@ -7,9 +7,9 @@ Possible migration: golang/rust
 
 Planned features:
 
-[] git wt - Forbid to execute in non-git repo
+[x] git wt - Forbid to execute in non-git repo
 
-[] git wt add - Create a worktree and copy over all hidden files (.env, for example)
+[-] git wt add - Create a worktree and copy over all hidden files (.env, for example)
 
 [] git wt rm - Remove a worktree and copy the difference in hidden files (optional, on by default)
 
