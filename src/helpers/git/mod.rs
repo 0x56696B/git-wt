@@ -14,6 +14,7 @@ pub fn get_bare_git_repo() -> Result<Repository, String> {
   return Ok(repo);
 }
 
+//TODO: Pull from cache
 pub fn get_default_worktree() -> Result<Repository, String> {
   let mut current_dir: PathBuf = env::current_dir().map_err(|e| e.to_string())?;
 

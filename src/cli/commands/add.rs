@@ -9,16 +9,17 @@ use crate::helpers::git::{get_bare_git_repo, get_default_worktree, ignored::get_
 pub fn add_command(args: AddArgs) -> Result<(), String> {
   let bare_repo = get_bare_git_repo().map_err(|e| e.to_string())?;
   let worktree: Worktree =
-    create_new_worktree(&bare_repo, &args.new_branch_name.as_str()).map_err(|e| e.to_string())?;
+    create_new_worktree(&bare_repo, args.new_branch_name.as_str()).map_err(|e| e.to_string())?;
 
   println!("New Worktree Created: {:?}; Repo: {:?}", worktree.path(), bare_repo.path());
 
-  //TODO: Copy git ignored files from origin(main) branch
   let main_branch_repo = get_default_worktree()?;
-  let ignored_files: Vec<String> =
-    get_ignored_files(&main_branch_repo).map_err(|e| e.to_string())?;
+  let ignored_files: Vec<PathBuf> =
+    get_ignored_files(&main_branch_repo, &args.exclude).map_err(|e| e.to_string())?;
 
   println!("ignored: {:?}", ignored_files);
+
+  //TODO: Copy git ignored files from origin(main) branch
 
   //TODO: Execute create config commands
   return Ok(());

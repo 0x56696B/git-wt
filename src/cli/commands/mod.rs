@@ -1,6 +1,8 @@
 pub mod add;
+pub mod add_args;
 pub mod test;
 
+use add_args::AddArgs;
 use clap::{Args, Subcommand};
 
 #[derive(Debug, Clone, Subcommand)]
@@ -10,19 +12,6 @@ pub enum Commands {
   Rm(RmArgs),
   Config(ConfigArgs),
   Open(OpenArgs),
-}
-
-/// Add a new folder with a worktree
-#[derive(Args, Debug, Clone)]
-pub struct AddArgs {
-  /// The new branch's name
-  ///
-  /// NOTE: Slashes `/` will be replaced with dash `-` to avoid folder nesting
-  new_branch_name: String,
-
-  /// Force checkout, even if the branch already exists locally
-  #[arg(short, long)]
-  force: bool,
 }
 
 /// Remove a worktree after it's been merged or no longer needed
