@@ -18,3 +18,9 @@ Planned features:
 [] git wt setup(?) - Provide a script, saved per repo in cache, that executes a script after `git wt add` or after `git wt rm`
 
 [] git wt migrate - Possible migrate non-bare repo to bare (if possible)
+
+[] Caching for main branch and main worktree discovery
+
+[] A file that saves the config per repo
+
+[] In the config file, allow to exclude copying of certain git ignored files on `git wt add`
