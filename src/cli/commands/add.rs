@@ -15,7 +15,8 @@ use crate::helpers::{
 pub fn add_command(args: AddArgs) -> Result<(), String> {
   let bare_repo: Repository = get_bare_git_repo().map_err(|e| e.to_string())?;
   let worktree: Worktree =
-    create_new_worktree(&bare_repo, args.new_branch_name.as_str()).map_err(|e| e.to_string())?;
+    create_new_worktree(&bare_repo, args.new_branch_name.as_str(), args.force)
+      .map_err(|e| e.to_string())?;
 
   println!("New Worktree Created: {:?}; Repo: {:?}", worktree.path(), bare_repo.path());
 
@@ -40,13 +41,19 @@ fn join_path(path: &Path, extension: &str) -> PathBuf {
   return path.join(extension);
 }
 
-fn create_new_worktree(bare_repo: &Repository, branch_name: &str) -> Result<Worktree, String> {
+fn create_new_worktree(
+  bare_repo: &Repository,
+  branch_name: &str,
+  force: bool,
+) -> Result<Worktree, String> {
   let repo_path: &Path = bare_repo.path();
   let escaped_branch_name: String = escape_branch_name(branch_name);
   let new_worktree_path: PathBuf = join_path(repo_path, escaped_branch_name.as_str());
 
   let mut add_options = WorktreeAddOptions::new();
-  add_options.checkout_existing(true);
+  if force {
+    add_options.checkout_existing(true);
+  }
 
   return match bare_repo.worktree(
     &escaped_branch_name,

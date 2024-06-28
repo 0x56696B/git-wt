@@ -1,9 +1,12 @@
 pub mod add;
 pub mod add_args;
+pub mod remove;
+pub mod remove_args;
 pub mod test;
 
 use add_args::AddArgs;
 use clap::{Args, Subcommand};
+use remove_args::RmArgs;
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
@@ -13,10 +16,6 @@ pub enum Commands {
   Config(ConfigArgs),
   Open(OpenArgs),
 }
-
-/// Remove a worktree after it's been merged or no longer needed
-#[derive(Args, Debug, Clone)]
-pub struct RmArgs {}
 
 /// Configure per-repo helpers and specfic behaviors
 #[derive(Args, Debug, Clone)]
