@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Run cargo fmt
+echo "Running cargo fmt..."
+cargo fmt
+FMT_STATUS=$?
+
+if [ $FMT_STATUS -ne 0 ]; then
+  echo "Code is not formatted. Please run 'cargo fmt' to format your code."
+  exit 1
+fi
+
+# If cargo fmt passes, allow the commit
+exit 0

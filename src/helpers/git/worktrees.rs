@@ -1,12 +1,13 @@
 use std::{
   env,
   path::{Path, PathBuf},
+  process::Command,
 };
 
 use git2::{Repository, Worktree, WorktreeAddOptions};
 
 use super::{
-  branch::get_repo_default_branch,
+  branch::{detect_worktree_merged, get_repo_default_branch, get_worktree_branch_name},
   general::{escape_branch_name, join_path},
 };
 
@@ -20,6 +21,38 @@ pub fn get_default_worktree() -> Result<Repository, String> {
 }
 
 pub(crate) fn create_new_worktree(
+  bare_repo: &Repository,
+  branch_name: &str,
+  force: bool,
+) -> Result<Worktree, String> {
+  let escaped_branch_name: String = escape_branch_name(branch_name);
+
+  let mut cmd = Command::new("git");
+  cmd
+    .arg("worktree")
+    .arg("add")
+    .arg("--checkout")
+    .arg("-B")
+    .arg(&branch_name)
+    .arg(&escaped_branch_name);
+
+  if force {
+    cmd.arg("--force");
+  }
+
+  let output = cmd.output().expect("Failed to create worktree");
+  if !output.status.success() {
+    return Err(format!("Unable to create worktree with branch {} at path {}", &branch_name, &escaped_branch_name));
+  }
+
+  let worktree: Worktree = bare_repo.find_worktree(&escaped_branch_name).map_err(|e| e.message().to_string())?;
+
+  return Ok(worktree);
+}
+
+// FIXME: This doesn't work, for some reason. Doesn't map to branch and directory name properly
+// Or I might be doing something wrong, idk
+pub(crate) fn create_new_worktree_native(
   bare_repo: &Repository,
   branch_name: &str,
   force: bool,
@@ -42,3 +75,4 @@ pub(crate) fn create_new_worktree(
     Err(e) => Err(e.message().to_string()),
   };
 }
+
