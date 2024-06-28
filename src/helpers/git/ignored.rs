@@ -1,8 +1,4 @@
-use std::{
-  collections::HashSet,
-  fs::read_dir,
-  path::PathBuf,
-};
+use std::{collections::HashSet, fs::read_dir, path::PathBuf};
 
 use crate::extensions::path_buf::PathBufExt;
 use git2::{Repository, Status, StatusEntry, StatusOptions, StatusShow};

@@ -1,6 +1,6 @@
 mod cli;
-mod helpers;
 mod extensions;
+mod helpers;
 
 use cli::{
   commands::{add::add_command, remove::remove_command, test::test_command, Commands},

@@ -1,14 +1,15 @@
-use std::{
-  collections::HashSet,
-  path::{Path, PathBuf},
-};
+use std::{collections::HashSet, path::PathBuf};
 
-use git2::{Repository, Worktree, WorktreeAddOptions};
+use git2::{Repository, Worktree};
 
 use super::AddArgs;
 use crate::helpers::{
   copy_funcs::copy_files,
-  git::{get_bare_git_repo, get_default_worktree, ignored::get_ignored_files},
+  git::{
+    ignored::get_ignored_files,
+    repo::get_bare_git_repo,
+    worktrees::{create_new_worktree, get_default_worktree},
+  },
 };
 
 /// Function to execute Command::Add
@@ -31,36 +32,4 @@ pub fn add_command(args: AddArgs) -> Result<(), String> {
 
   //TODO: Execute create config commands
   return Ok(());
-}
-
-fn escape_branch_name(new_branch_name: &str) -> String {
-  return str::replace(new_branch_name, "/", "-");
-}
-
-fn join_path(path: &Path, extension: &str) -> PathBuf {
-  return path.join(extension);
-}
-
-fn create_new_worktree(
-  bare_repo: &Repository,
-  branch_name: &str,
-  force: bool,
-) -> Result<Worktree, String> {
-  let repo_path: &Path = bare_repo.path();
-  let escaped_branch_name: String = escape_branch_name(branch_name);
-  let new_worktree_path: PathBuf = join_path(repo_path, escaped_branch_name.as_str());
-
-  let mut add_options = WorktreeAddOptions::new();
-  if force {
-    add_options.checkout_existing(true);
-  }
-
-  return match bare_repo.worktree(
-    &escaped_branch_name,
-    new_worktree_path.as_path(),
-    Some(&add_options),
-  ) {
-    Ok(worktree) => Ok(worktree),
-    Err(e) => Err(e.message().to_string()),
-  };
 }
