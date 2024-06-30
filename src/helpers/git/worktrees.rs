@@ -7,17 +7,22 @@ use std::{
 use git2::{Repository, Worktree, WorktreeAddOptions};
 
 use super::{
-  branch::{detect_worktree_merged, get_repo_default_branch, get_worktree_branch_name},
+  branch::{detect_worktree_merged, get_repo_default_branch_name, get_worktree_branch_name},
   general::{escape_branch_name, join_path},
 };
 
 //TODO: Pull from cache
 pub fn get_default_worktree() -> Result<Repository, String> {
   let mut current_dir: PathBuf = env::current_dir().map_err(|e| e.to_string())?;
+  let default_branch_name: String = get_repo_default_branch_name()?;
 
-  current_dir.push(get_repo_default_branch());
+  current_dir.push(default_branch_name);
 
   return Repository::discover(current_dir).map_err(|e| e.message().to_string());
+}
+
+pub fn get_worktree_path(worktree: &Worktree) -> &Path {
+  return worktree.path();
 }
 
 pub(crate) fn create_new_worktree(
@@ -63,7 +68,7 @@ pub(crate) fn create_new_worktree_native(
 ) -> Result<Worktree, String> {
   let repo_path: &Path = bare_repo.path();
   let escaped_branch_name: String = escape_branch_name(branch_name);
-  let new_worktree_path: PathBuf = join_path(repo_path, escaped_branch_name.as_str());
+  let new_worktree_path: PathBuf = join_path(repo_path, &escaped_branch_name);
 
   let mut add_options = WorktreeAddOptions::new();
   if force {
@@ -89,18 +94,17 @@ pub(crate) fn remove_worktree(
     bare_repo.find_worktree(worktree_name).map_err(|e| e.message().to_string())?;
 
   let worktree_branch_name = get_worktree_branch_name(&worktree).map_err(|e| e.to_string())?;
+  let default_branch_name: String = get_repo_default_branch_name()?;
 
   // let mut prune_options = WorktreePruneOptions::new();
   // prune_options.working_tree(true);
 
-  let default_branch: String = get_repo_default_branch();
-
   if !force {
-    let merged =
-      detect_worktree_merged(bare_repo, &worktree_branch_name, &default_branch).map_err(|e| e)?;
+    let merged = detect_worktree_merged(bare_repo, &worktree_branch_name, &default_branch_name)
+      .map_err(|e| e)?;
 
     if !merged {
-      return Err(format!("Worktree {0} has not been merged to {1} branch. Use --force to override or merge it with {1}", worktree_name, default_branch));
+      return Err(format!("Worktree {0} has not been merged to {1} branch. Use --force to override or merge it with {1}", worktree_name, default_branch_name));
     }
 
     // let prunable = worktree.is_prunable(Some(&mut prune_options)).unwrap_or_else(|_| false);
@@ -111,10 +115,7 @@ pub(crate) fn remove_worktree(
 
   // NOTE: Remove still doesn't exist in the git2-rs lib
   let mut cmd = Command::new("git");
-  cmd
-    .arg("worktree")
-    .arg("remove")
-    .arg(&worktree_name);
+  cmd.arg("worktree").arg("remove").arg(&worktree_name);
 
   if force {
     cmd.arg("--force");
@@ -122,10 +123,7 @@ pub(crate) fn remove_worktree(
 
   let output = cmd.output().expect("Failed to execute remove worktree command");
   if !output.status.success() {
-    return Err(format!(
-      "Unable to remove worktree at path {}",
-      &worktree_name
-    ));
+    return Err(format!("Unable to remove worktree at path {}", &worktree_name));
   }
 
   // worktree.prune(Some(&mut prune_options));

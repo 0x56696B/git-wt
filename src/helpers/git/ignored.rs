@@ -40,8 +40,8 @@ pub fn get_ignored_files(
   return Ok(ignored_files);
 }
 
+// TODO: Move into function that contains all ignored patterns from config
 fn collect_files_recursive(path: PathBuf, files: &mut Vec<PathBuf>, filter: &Vec<String>) {
-  // TODO: Move into function that contains all ignored patterns from config
   for i in 0..filter.len() {
     if path.to_string_lossy().contains(&filter[i]) {
       return;

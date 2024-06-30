@@ -8,7 +8,7 @@ use crate::helpers::{
   git::{
     ignored::get_ignored_files,
     repo::get_bare_git_repo,
-    worktrees::{create_new_worktree, get_default_worktree},
+    worktrees::{create_new_worktree, get_default_worktree, get_worktree_path},
   },
 };
 
@@ -26,8 +26,9 @@ pub fn add_command(args: AddArgs) -> Result<(), String> {
     get_ignored_files(&main_branch_repo, &args.exclude).map_err(|e| e.to_string())?;
 
   let root_src = main_branch_repo.workdir().ok_or("Unable to find workdir for default branch")?;
-  let root_dest = worktree.path();
+  let root_dest = get_worktree_path(&worktree);
   let file_paths = ignored_files.iter().map(|file| file.as_path()).collect();
+
   copy_files(root_src, root_dest, file_paths).map_err(|e| e)?;
 
   //TODO: Execute create config commands

@@ -9,7 +9,6 @@ pub fn remove_command(args: RmArgs) -> Result<(), String> {
   let bare_repo: Repository = get_bare_git_repo().map_err(|e| e.to_string())?;
 
   //TODO: Execute remove config commands
-  //
   return remove_worktree(&bare_repo, args.worktree_name.as_str(), args.force)
     .map_err(|e| e.to_string());
 }
