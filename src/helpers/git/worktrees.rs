@@ -40,12 +40,16 @@ pub(crate) fn create_new_worktree(
     cmd.arg("--force");
   }
 
-  let output = cmd.output().expect("Failed to create worktree");
+  let output = cmd.output().expect("Failed to execute create worktree command");
   if !output.status.success() {
-    return Err(format!("Unable to create worktree with branch {} at path {}", &branch_name, &escaped_branch_name));
+    return Err(format!(
+      "Unable to create worktree with branch {} at path {}",
+      &branch_name, &escaped_branch_name
+    ));
   }
 
-  let worktree: Worktree = bare_repo.find_worktree(&escaped_branch_name).map_err(|e| e.message().to_string())?;
+  let worktree: Worktree =
+    bare_repo.find_worktree(&escaped_branch_name).map_err(|e| e.message().to_string())?;
 
   return Ok(worktree);
 }
@@ -76,3 +80,55 @@ pub(crate) fn create_new_worktree_native(
   };
 }
 
+pub(crate) fn remove_worktree(
+  bare_repo: &Repository,
+  worktree_name: &str,
+  force: bool,
+) -> Result<(), String> {
+  let worktree: Worktree =
+    bare_repo.find_worktree(worktree_name).map_err(|e| e.message().to_string())?;
+
+  let worktree_branch_name = get_worktree_branch_name(&worktree).map_err(|e| e.to_string())?;
+
+  // let mut prune_options = WorktreePruneOptions::new();
+  // prune_options.working_tree(true);
+
+  let default_branch: String = get_repo_default_branch();
+
+  if !force {
+    let merged =
+      detect_worktree_merged(bare_repo, &worktree_branch_name, &default_branch).map_err(|e| e)?;
+
+    if !merged {
+      return Err(format!("Worktree {0} has not been merged to {1} branch. Use --force to override or merge it with {1}", worktree_name, default_branch));
+    }
+
+    // let prunable = worktree.is_prunable(Some(&mut prune_options)).unwrap_or_else(|_| false);
+    // if !prunable {
+    //   return Err(format!("Worktree {} is not prunable. Use --force to override", worktree_name));
+    // }
+  }
+
+  // NOTE: Remove still doesn't exist in the git2-rs lib
+  let mut cmd = Command::new("git");
+  cmd
+    .arg("worktree")
+    .arg("remove")
+    .arg(&worktree_name);
+
+  if force {
+    cmd.arg("--force");
+  }
+
+  let output = cmd.output().expect("Failed to execute remove worktree command");
+  if !output.status.success() {
+    return Err(format!(
+      "Unable to remove worktree at path {}",
+      &worktree_name
+    ));
+  }
+
+  // worktree.prune(Some(&mut prune_options));
+
+  return Ok(());
+}
