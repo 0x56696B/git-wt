@@ -61,6 +61,7 @@ pub(crate) fn create_new_worktree(
 
 // FIXME: This doesn't work, for some reason. Doesn't map to branch and directory name properly
 // Or I might be doing something wrong, idk
+#[allow(dead_code)]
 pub(crate) fn create_new_worktree_native(
   bare_repo: &Repository,
   branch_name: &str,
