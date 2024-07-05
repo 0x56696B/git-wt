@@ -3,7 +3,9 @@ mod extensions;
 mod helpers;
 
 use cli::{
-  commands::{add::add_command, remove::remove_command, test::test_command, Commands},
+  commands::{
+    add::add_command, config::config_command, remove::remove_command, test::test_command, Commands,
+  },
   Cli,
 };
 
@@ -14,7 +16,7 @@ fn main() {
     Commands::Test(args) => test_command(args),
     Commands::Add(args) => add_command(args),
     Commands::Rm(args) => remove_command(args),
-    Commands::Config(_args) => todo!(),
+    Commands::Config(args) => config_command(args),
     Commands::Open(_args) => todo!(),
   };
 
