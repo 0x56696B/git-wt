@@ -1,11 +1,20 @@
-use std::{collections::HashSet, fs::read_dir, path::PathBuf};
+use core::panic;
+use std::{
+  collections::HashSet,
+  fs::read_dir,
+  path::{Path, PathBuf},
+  str::FromStr,
+};
 
 use crate::extensions::path_buf::PathBufExt;
 use git2::{Repository, Status, StatusEntry, StatusOptions, StatusShow};
 
-pub fn get_ignored_files(
+/// Get files to later copy to new Worktree dir
+/// Files will be returned relative to worktree
+pub fn get_files_cp(
   default_branch_repo: &Repository,
   filter_files: &Vec<String>,
+  excluded_dirs: &Vec<String>,
 ) -> Result<HashSet<PathBuf>, String> {
   let mut status_opts = StatusOptions::new();
   status_opts.include_ignored(true).recurse_untracked_dirs(true).show(StatusShow::IndexAndWorkdir);
@@ -29,18 +38,31 @@ pub fn get_ignored_files(
       let absolute_path = format!("{}{}", &default_branch_path, x.path()?);
       return Some(PathBuf::from(absolute_path));
     })
-    .flat_map(|path| {
+    // Git ignored files
+    .flat_map(|path_buf: PathBuf| {
       let mut paths: Vec<PathBuf> = Vec::new();
-      collect_files_recursive(path, &mut paths, filter_files);
+      collect_files_recursive(path_buf, &mut paths, filter_files);
 
       return paths;
     })
+    // Config ignored files
+    .filter(|path_buf: &PathBuf| {
+      let path = &path_buf.to_string_lossy();
+
+      return !excluded_dirs.iter().any(|excluded| path.contains(excluded));
+    })
+    .map(|path_buf: PathBuf| {
+      let path = path_buf.to_string().unwrap();
+      return PathBuf::from_str(&path[default_branch_path.len()..path.len()]).unwrap();
+    })
+    // .inspect(|x: &PathBuf| {
+    //   println!("{:?}", x.display());
+    // })
     .collect::<HashSet<_>>();
 
   return Ok(ignored_files);
 }
 
-// TODO: Move into function that contains all ignored patterns from config
 fn collect_files_recursive(path: PathBuf, files: &mut Vec<PathBuf>, filter: &Vec<String>) {
   for i in 0..filter.len() {
     if path.to_string_lossy().contains(&filter[i]) {

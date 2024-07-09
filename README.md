@@ -9,7 +9,7 @@ Planned features:
 
 [x] git wt - Forbid to execute in non-git repo
 
-[-] git wt add - Create a worktree and copy over all hidden files (.env, for example)
+[x] git wt add - Create a worktree and copy over all hidden files (.env, for example)
 
 [-] git wt rm - Remove a worktree and copy the difference in hidden files (optional, on by default)
 
@@ -24,3 +24,5 @@ Planned features:
 [] A file that saves the config per repo
 
 [] In the config file, allow to exclude copying of certain git ignored files on `git wt add`
+
+TODO: Add tracing (rust::tracing)

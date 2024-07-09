@@ -3,35 +3,62 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use crate::extensions::path_buf::PathBufExt;
-
 /// Returns: Copied files in tuple (src, dest)
 pub fn copy_files(
   root_src: &Path,
   root_dest: &Path,
-  files_paths: Vec<&Path>,
-) -> Result<(), String> {
-  for file_path in files_paths {
-    let src_path: PathBuf = root_src.join(file_path);
-    let dest_path: PathBuf = root_dest.join(file_path);
+  files: Vec<&Path>,
+) -> Vec<Result<String, String>> {
+  return files
+    .iter()
+    .map(|path| {
+      let src: PathBuf = root_src.join(path);
+      let dest: PathBuf = root_dest.join(path);
 
-    if !src_path.exists() {
-      continue;
-    }
+      println!("root_dest: {:?}; dest: {:?}; path: {:?}", root_dest, dest, path);
+      return (src, dest);
+    })
+    // .inspect(|(src, dest)| {
+    //   println!("Do we even get here? {:?}: {:?}", &src.display(), &dest.display());
+    // })
+    .filter(|(src, dest)| {
+      let filter = src.exists();
+      println!("Filter: {} -> {:?}: {:?}", filter, &src.display(), &dest.display());
 
-    let dest_parent = dest_path
-      .parent()
-      .ok_or(format!("Error getting parent directory of {}", dest_path.display()))?;
+      return filter;
+    })
+    .map_while(|(src, dest): (PathBuf, PathBuf)| -> Option<(PathBuf, PathBuf)> {
+      let dest_parent = dest.parent();
+      if dest_parent.is_none() {
+        println!("Unable to get parent dir for {:?}", &dest.display());
+        return None;
+      }
 
-    create_dir_all(&dest_parent)
-      .map_err(|e| format!("Failed to create directory {}: {}", dest_parent.display(), e))?;
+      // println!("Do we even get here? {:?}: {:?}", &src, &dest);
+      let create_res = create_dir_all(dest_parent.unwrap());
+      if create_res.is_err() {
+        return None;
+      }
 
-    copy(&src_path, &dest_path).map_err(|e| {
-      format!("Failed to copy from {} to {}: {}", src_path.display(), dest_path.display(), e)
-    })?;
+      return Some((src, dest));
+    })
+    .inspect(|(src, dest)| {
+      println!("Ready for copying: {:?} - {:?}", &src.display(), &dest.display());
+    })
+    .map(|(src, dest)| -> Result<String, String> {
+      let copy_res = copy(&src, &dest)
+        .map(|_| format!("Copied: {:?} -> {:?}", src.to_string_lossy(), dest.to_string_lossy()))
+        .map_err(|e| format!("Failed to copy from {} to {}: {}", src.display(), dest.display(), e));
 
-    println!("Copied: {} -> {}", src_path.to_string().unwrap(), dest_path.to_string().unwrap());
-  }
+      return copy_res;
+    })
+    .inspect(|copy_res: &Result<String, String>| {
+      println!("ARE WE HERE?");
 
-  return Ok(());
+      match copy_res {
+        Ok(succ) => println!("{}", succ),
+        Err(err) => println!("{}", err),
+      }
+    })
+    .collect::<Vec<Result<String, String>>>();
 }
