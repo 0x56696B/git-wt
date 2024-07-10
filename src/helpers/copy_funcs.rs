@@ -15,18 +15,12 @@ pub fn copy_files(
       let src: PathBuf = root_src.join(path);
       let dest: PathBuf = root_dest.join(path);
 
-      println!("root_dest: {:?}; dest: {:?}; path: {:?}", root_dest, dest, path);
       return (src, dest);
     })
     // .inspect(|(src, dest)| {
     //   println!("Do we even get here? {:?}: {:?}", &src.display(), &dest.display());
     // })
-    .filter(|(src, dest)| {
-      let filter = src.exists();
-      println!("Filter: {} -> {:?}: {:?}", filter, &src.display(), &dest.display());
-
-      return filter;
-    })
+    .filter(|(src, _dest)| src.exists())
     .map_while(|(src, dest): (PathBuf, PathBuf)| -> Option<(PathBuf, PathBuf)> {
       let dest_parent = dest.parent();
       if dest_parent.is_none() {
@@ -34,7 +28,6 @@ pub fn copy_files(
         return None;
       }
 
-      // println!("Do we even get here? {:?}: {:?}", &src, &dest);
       let create_res = create_dir_all(dest_parent.unwrap());
       if create_res.is_err() {
         return None;
@@ -42,9 +35,9 @@ pub fn copy_files(
 
       return Some((src, dest));
     })
-    .inspect(|(src, dest)| {
-      println!("Ready for copying: {:?} - {:?}", &src.display(), &dest.display());
-    })
+    // .inspect(|(src, dest)| {
+    //   println!("Ready for copying: {:?} - {:?}", &src.display(), &dest.display());
+    // })
     .map(|(src, dest)| -> Result<String, String> {
       let copy_res = copy(&src, &dest)
         .map(|_| format!("Copied: {:?} -> {:?}", src.to_string_lossy(), dest.to_string_lossy()))
@@ -52,13 +45,9 @@ pub fn copy_files(
 
       return copy_res;
     })
-    .inspect(|copy_res: &Result<String, String>| {
-      println!("ARE WE HERE?");
-
-      match copy_res {
-        Ok(succ) => println!("{}", succ),
-        Err(err) => println!("{}", err),
-      }
+    .inspect(|copy_res: &Result<String, String>| match copy_res {
+      Ok(succ) => println!("{}", succ),
+      Err(err) => println!("{}", err),
     })
     .collect::<Vec<Result<String, String>>>();
 }

@@ -1,9 +1,6 @@
 # git-wt
 
-A git extension to make git worktree easier to use
-
-Current language: bash/python
-Possible migration: golang/rust
+A git extension to make git worktree easier to use and more intuitive
 
 Planned features:
 
@@ -26,3 +23,5 @@ Planned features:
 [] In the config file, allow to exclude copying of certain git ignored files on `git wt add`
 
 TODO: Add tracing (rust::tracing)
+TODO: Add some kind of rollback mechanism when something fails
+TODO: Think of maybe using channels to async print stuff to stdout/stderr to avoid colored functions

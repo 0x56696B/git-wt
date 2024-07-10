@@ -1,4 +1,3 @@
-use core::panic;
 use std::{
   collections::HashSet,
   fs::read_dir,
@@ -11,7 +10,7 @@ use git2::{Repository, Status, StatusEntry, StatusOptions, StatusShow};
 
 /// Get files to later copy to new Worktree dir
 /// Files will be returned relative to worktree
-pub fn get_files_cp(
+pub fn get_files_for_cp(
   default_branch_repo: &Repository,
   filter_files: &Vec<String>,
   excluded_dirs: &Vec<String>,
@@ -30,13 +29,18 @@ pub fn get_files_cp(
 
   let ignored_files: HashSet<PathBuf> = statuses
     .iter()
-    .filter_map(|x: StatusEntry| {
-      if x.status() != Status::IGNORED {
-        return None;
-      };
+    // .inspect(|x| {
+    //   println!("Non-ignored file: {:?}", x.path());
+    // })
+    .filter(|x| x.status() == Status::IGNORED)
+    // .inspect(|x| {
+    //   println!("Ignored file: {:?}", x.path());
+    // })
+    .map(|x: StatusEntry| {
+      let entry_path = x.path().unwrap();
 
-      let absolute_path = format!("{}{}", &default_branch_path, x.path()?);
-      return Some(PathBuf::from(absolute_path));
+      let absolute_path = format!("{}{}", &default_branch_path, entry_path);
+      return PathBuf::from(absolute_path);
     })
     // Git ignored files
     .flat_map(|path_buf: PathBuf| {

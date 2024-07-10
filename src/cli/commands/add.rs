@@ -13,7 +13,7 @@ use crate::helpers::{
   git::{
     config::{get_config_entries, get_wt_config},
     config_keys::{CONFIG_KEY_ADD_COMMANDS, CONFIG_KEY_EXCLUDE_FILES},
-    ignored::get_files_cp,
+    ignored::get_files_for_cp,
     repo::{get_bare_git_repo, get_repo_name},
     worktrees::{create_new_worktree, get_default_worktree, get_worktree_path},
   },
@@ -32,7 +32,8 @@ pub fn add_command(args: AddArgs) -> Result<(), String> {
   let main_branch_repo: Repository = get_default_worktree()?;
 
   let ignored_files: HashSet<PathBuf> =
-    get_files_cp(&main_branch_repo, &args.exclude, &excluded_files).map_err(|e| e.to_string())?;
+    get_files_for_cp(&main_branch_repo, &args.exclude, &excluded_files)
+      .map_err(|e| e.to_string())?;
 
   let root_src = main_branch_repo.workdir().ok_or("Unable to find workdir for default branch")?;
   let root_dest = get_worktree_path(&worktree);
