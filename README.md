@@ -18,10 +18,10 @@ Planned features:
 
 [] Caching for main branch and main worktree discovery
 
-[] A file that saves the config per repo
+[x] A file that saves the config per repo
 
-[] In the config file, allow to exclude copying of certain git ignored files on `git wt add`
+[x] In the config file, allow to exclude copying of certain git ignored files on `git wt add`
 
 TODO: Add tracing (rust::tracing)
-TODO: Add some kind of rollback mechanism when something fails
+TODO: Add some kind of rollback mechanism when something fails (libgit2 transactions?)
 TODO: Think of maybe using channels to async print stuff to stdout/stderr to avoid colored functions

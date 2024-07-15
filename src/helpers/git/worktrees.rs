@@ -86,13 +86,13 @@ pub(crate) fn create_new_worktree_native(
   };
 }
 
+// FIXME: Fix, not working find_worktree
 pub(crate) fn remove_worktree(
-  bare_repo: &Repository,
+  repo: &Repository,
   worktree_name: &str,
   force: bool,
 ) -> Result<(), String> {
-  let worktree: Worktree =
-    bare_repo.find_worktree(worktree_name).map_err(|e| e.message().to_string())?;
+  let worktree: Worktree = get_worktree(repo, worktree_name)?;
 
   let worktree_branch_name = get_worktree_branch_name(&worktree).map_err(|e| e.to_string())?;
   let default_branch_name: String = get_repo_default_branch_name()?;
@@ -101,8 +101,8 @@ pub(crate) fn remove_worktree(
   // prune_options.working_tree(true);
 
   if !force {
-    let merged = detect_worktree_merged(bare_repo, &worktree_branch_name, &default_branch_name)
-      .map_err(|e| e)?;
+    let merged =
+      detect_worktree_merged(repo, &worktree_branch_name, &default_branch_name).map_err(|e| e)?;
 
     if !merged {
       return Err(format!("Worktree {0} has not been merged to {1} branch. Use --force to override or merge it with {1}", worktree_name, default_branch_name));
@@ -130,4 +130,20 @@ pub(crate) fn remove_worktree(
   // worktree.prune(Some(&mut prune_options));
 
   return Ok(());
+}
+
+fn get_worktree(repo: &Repository, worktree_name: &str) -> Result<Worktree, String> {
+  let contains_wt = repo
+    .worktrees()
+    .map_err(|e| e.message().to_string())?
+    .iter()
+    .filter_map(|wt| wt)
+    .collect::<Vec<&str>>()
+    .contains(&worktree_name);
+
+  if !contains_wt {
+    return Err("Worktree not contained in repo".to_string());
+  }
+
+  return repo.find_worktree(&worktree_name).map_err(|e| e.message().to_string());
 }
