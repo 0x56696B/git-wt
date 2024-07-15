@@ -1,6 +1,8 @@
 use std::{
   fs::{create_dir_all, File},
+  io::{self, Write},
   path::{Path, PathBuf},
+  process::{Command, Stdio},
 };
 
 use git2::{Config, ConfigLevel, Error, Repository};
@@ -8,10 +10,7 @@ use git2::{Config, ConfigLevel, Error, Repository};
 use super::repo::get_repo_name;
 
 /// This retuns the config for the repository
-/// If values need to be queried, call .snapshot()
 /// The config is a dedicated file for git-wt
-///
-/// This means the execution will not change, if the config is changed while the app is running
 pub(crate) fn get_wt_config() -> Result<Config, String> {
   let mut config_path: PathBuf = get_config_path()?;
   config_path.set_file_name(".gitconfig_wt");
@@ -72,4 +71,41 @@ fn get_config_path() -> Result<PathBuf, String> {
   }
 
   return Err(String::from("Unable to find XDG or User git configuration"));
+}
+
+pub(crate) fn execute_config_cmds(
+  repo: &Repository,
+  exec_path: &str,
+  config_key: &str,
+) -> Result<Vec<()>, String> {
+  return Ok(
+    get_config_entries(&repo, config_key)?
+      .iter()
+      .map(|add_cmd: &String| {
+        let (exec, args) = add_cmd.split_once(" ").unwrap_or((&add_cmd, ""));
+
+        let mut cmd = Command::new(&exec);
+        cmd.current_dir(exec_path).stdout(Stdio::piped()).stderr(Stdio::piped()).arg(&args);
+
+        return cmd;
+      })
+      .collect::<Vec<Command>>()
+      .iter_mut()
+      .inspect(|cmd| println!("Executing: {:?}", cmd))
+      .map_while(|cmd: &mut Command| {
+        match cmd.output() {
+          Ok(succ) => {
+            io::stdout().write_all(&succ.stdout).unwrap();
+
+            return Some(());
+          }
+          Err(err) => {
+            io::stderr().write_all(&err.to_string().as_bytes()).unwrap();
+
+            return None;
+          }
+        };
+      })
+      .collect::<Vec<()>>(),
+  );
 }

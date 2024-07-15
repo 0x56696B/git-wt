@@ -2,8 +2,6 @@ use std::{path::Path, process::Command};
 
 use git2::{Branch, BranchType, Commit, Oid, Repository, Worktree};
 
-use super::worktrees::get_worktree_path;
-
 // TODO: Pull from cache
 pub(crate) fn get_repo_default_branch_name() -> Result<String, String> {
   let output = Command::new("git")
@@ -32,7 +30,7 @@ pub(crate) fn get_repo_default_branch_name() -> Result<String, String> {
 }
 
 pub(crate) fn get_worktree_branch_name(worktree: &Worktree) -> Result<String, String> {
-  let worktree_path: &Path = get_worktree_path(worktree);
+  let worktree_path: &Path = &worktree.path();
 
   return get_branch_name_from_path(worktree_path);
 }

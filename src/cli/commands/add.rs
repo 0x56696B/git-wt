@@ -1,9 +1,4 @@
-use std::{
-  collections::HashSet,
-  io::{self, Write},
-  path::PathBuf,
-  process::{Command, Stdio},
-};
+use std::{collections::HashSet, path::PathBuf};
 
 use git2::{Repository, Worktree};
 
@@ -11,11 +6,11 @@ use super::AddArgs;
 use crate::helpers::{
   copy_funcs::copy_files,
   git::{
-    config::{get_config_entries, get_wt_config},
+    config::{execute_config_cmds, get_wt_config},
     config_keys::{CONFIG_KEY_ADD_COMMANDS, CONFIG_KEY_EXCLUDE_FILES},
     ignored::get_files_for_cp,
     repo::{get_bare_git_repo, get_repo_name},
-    worktrees::{create_new_worktree, get_default_worktree, get_worktree_path},
+    worktrees::{create_new_worktree, get_default_worktree},
   },
 };
 
@@ -36,7 +31,7 @@ pub fn add_command(args: AddArgs) -> Result<(), String> {
       .map_err(|e| e.to_string())?;
 
   let root_src = main_branch_repo.workdir().ok_or("Unable to find workdir for default branch")?;
-  let root_dest = get_worktree_path(&worktree);
+  let root_dest = &worktree.path();
   let file_paths = ignored_files.iter().map(|file| file.as_path()).collect();
 
   let _ = copy_files(root_src, root_dest, file_paths);
@@ -64,41 +59,4 @@ fn get_excluded_files(repo: &Repository) -> Result<Vec<String>, String> {
     .map_err(|e| e.to_string())?;
 
   return Ok(entries);
-}
-
-fn execute_config_cmds(
-  repo: &Repository,
-  exec_path: &str,
-  config_key: &str,
-) -> Result<Vec<()>, String> {
-  return Ok(
-    get_config_entries(&repo, config_key)?
-      .iter()
-      .map(|add_cmd: &String| {
-        let (exec, args) = add_cmd.split_once(" ").unwrap_or((&add_cmd, ""));
-
-        let mut cmd = Command::new(&exec);
-        cmd.current_dir(exec_path).stdout(Stdio::piped()).stderr(Stdio::piped()).arg(&args);
-
-        return cmd;
-      })
-      .collect::<Vec<Command>>()
-      .iter_mut()
-      .inspect(|cmd| println!("Executing: {:?}", cmd))
-      .map_while(|cmd: &mut Command| {
-        match cmd.output() {
-          Ok(succ) => {
-            io::stdout().write_all(&succ.stdout).unwrap();
-
-            return Some(());
-          }
-          Err(err) => {
-            io::stderr().write_all(&err.to_string().as_bytes()).unwrap();
-
-            return None;
-          }
-        };
-      })
-      .collect::<Vec<()>>(),
-  );
 }
