@@ -24,7 +24,8 @@ pub fn add_command(args: AddArgs) -> Result<(), String> {
   println!("New Worktree Created: {:?}; Repo: {:?}", worktree.path(), bare_repo.path());
 
   let excluded_files = get_excluded_files(&bare_repo)?;
-  let main_branch_repo: Repository = get_default_worktree()?;
+  let repo_name: &str = get_repo_name(&bare_repo)?;
+  let main_branch_repo: Repository = get_default_worktree(repo_name)?;
 
   let ignored_files: HashSet<PathBuf> =
     get_files_for_cp(&main_branch_repo, &args.exclude, &excluded_files)
@@ -37,7 +38,9 @@ pub fn add_command(args: AddArgs) -> Result<(), String> {
   let _ = copy_files(root_src, root_dest, file_paths);
 
   let worktree_path = worktree.path().to_str().unwrap();
-  let _ = execute_config_cmds(&bare_repo, worktree_path, CONFIG_KEY_ADD_COMMANDS)?;
+
+  let repo_name: &str = get_repo_name(&bare_repo)?;
+  let _ = execute_config_cmds(repo_name, worktree_path, CONFIG_KEY_ADD_COMMANDS)?;
 
   return Ok(());
 }

@@ -5,9 +5,7 @@ use std::{
   process::{Command, Stdio},
 };
 
-use git2::{Config, ConfigLevel, Error, Repository};
-
-use super::repo::get_repo_name;
+use git2::{Config, ConfigLevel, Error};
 
 /// This retuns the config for the repository
 /// The config is a dedicated file for git-wt
@@ -36,13 +34,15 @@ pub(crate) fn get_wt_config() -> Result<Config, String> {
   return Ok(config);
 }
 
-pub(crate) fn get_config_entries(
-  repo: &Repository,
-  config_key: &str,
-) -> Result<Vec<String>, String> {
+pub(crate) fn get_config_entry(repo_name: &str, config_key: &str) -> Result<String, String> {
   let config = get_wt_config()?;
-  let repo_name = get_repo_name(&repo)?;
+  let config_key: String = format!("{}.{}", repo_name, config_key);
 
+  return config.get_string(&config_key).map_err(|e| e.to_string());
+}
+
+pub(crate) fn get_config_entries(repo_name: &str, config_key: &str) -> Result<Vec<String>, String> {
+  let config = get_wt_config()?;
   let config_key: String = format!("{}.{}", repo_name, config_key);
 
   let excluded_files_entry = config.multivar(&config_key, None).map_err(|e| e.to_string())?;
@@ -59,27 +59,24 @@ pub(crate) fn get_config_entries(
   return Ok(entries);
 }
 
-fn get_config_path() -> Result<PathBuf, String> {
-  let xdg_config: Result<PathBuf, Error> = Config::find_xdg();
-  if !xdg_config.is_err() {
-    return Ok(xdg_config.unwrap());
-  }
+pub(crate) fn add_config_entry(
+  repo_name: &str,
+  config_key: &str,
+  new_value: &str,
+) -> Result<(), String> {
+  let mut config = get_wt_config()?;
+  let config_key: String = format!("{}.{}", repo_name, config_key);
 
-  let user_config: Result<PathBuf, Error> = Config::find_global();
-  if !user_config.is_err() {
-    return Ok(user_config.unwrap());
-  }
-
-  return Err(String::from("Unable to find XDG or User git configuration"));
+  return config.set_str(&config_key, new_value).map_err(|e| e.message().to_string());
 }
 
 pub(crate) fn execute_config_cmds(
-  repo: &Repository,
+  repo_name: &str,
   exec_path: &str,
   config_key: &str,
 ) -> Result<Vec<()>, String> {
   return Ok(
-    get_config_entries(&repo, config_key)?
+    get_config_entries(repo_name, config_key)?
       .iter()
       .map(|add_cmd: &String| {
         let (exec, args) = add_cmd.split_once(" ").unwrap_or((&add_cmd, ""));
@@ -108,4 +105,18 @@ pub(crate) fn execute_config_cmds(
       })
       .collect::<Vec<()>>(),
   );
+}
+
+fn get_config_path() -> Result<PathBuf, String> {
+  let xdg_config: Result<PathBuf, Error> = Config::find_xdg();
+  if !xdg_config.is_err() {
+    return Ok(xdg_config.unwrap());
+  }
+
+  let user_config: Result<PathBuf, Error> = Config::find_global();
+  if !user_config.is_err() {
+    return Ok(user_config.unwrap());
+  }
+
+  return Err(String::from("Unable to find XDG or User git configuration"));
 }

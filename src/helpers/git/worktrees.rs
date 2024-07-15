@@ -3,14 +3,15 @@ use std::{env, path::PathBuf, process::Command};
 use git2::{Repository, Worktree};
 
 use super::{
-  branch::{detect_worktree_merged, get_repo_default_branch_name, get_worktree_branch_name},
+  branch::{detect_worktree_merged, get_default_branch_name, get_worktree_branch_name},
   general::escape_branch_name,
+  repo::get_repo_name,
 };
 
 //TODO: Pull from cache
-pub fn get_default_worktree() -> Result<Repository, String> {
+pub fn get_default_worktree(repo_name: &str) -> Result<Repository, String> {
   let mut current_dir: PathBuf = env::current_dir().map_err(|e| e.to_string())?;
-  let default_branch_name: String = get_repo_default_branch_name()?;
+  let default_branch_name: String = get_default_branch_name(repo_name)?;
 
   current_dir.push(default_branch_name);
 
@@ -58,8 +59,9 @@ pub(crate) fn remove_worktree(
 ) -> Result<(), String> {
   let worktree: Worktree = get_worktree(repo, worktree_name)?;
 
+  let repo_name: &str = get_repo_name(&repo)?;
   let worktree_branch_name = get_worktree_branch_name(&worktree).map_err(|e| e.to_string())?;
-  let default_branch_name: String = get_repo_default_branch_name()?;
+  let default_branch_name: String = get_default_branch_name(repo_name)?;
 
   // let mut prune_options = WorktreePruneOptions::new();
   // prune_options.working_tree(true);

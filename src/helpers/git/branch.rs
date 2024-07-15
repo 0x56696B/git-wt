@@ -2,8 +2,17 @@ use std::{path::Path, process::Command};
 
 use git2::{Branch, BranchType, Commit, Oid, Repository, Worktree};
 
-// TODO: Pull from cache
-pub(crate) fn get_repo_default_branch_name() -> Result<String, String> {
+use super::{
+  config::{add_config_entry, get_config_entry},
+  config_keys::CONFIG_KEY_DEFAULT_BRANCH,
+};
+
+pub(crate) fn get_default_branch_name(repo_name: &str) -> Result<String, String> {
+  let config_entry = get_config_entry(repo_name, CONFIG_KEY_DEFAULT_BRANCH);
+  if config_entry.is_ok() {
+    return Ok(config_entry.unwrap());
+  }
+
   let output = Command::new("git")
     .arg("ls-remote")
     .arg("--symref")
@@ -26,6 +35,9 @@ pub(crate) fn get_repo_default_branch_name() -> Result<String, String> {
     .collect();
 
   let parsed = &symref[0..symref.len()];
+
+  let _ = add_config_entry(repo_name, CONFIG_KEY_DEFAULT_BRANCH, parsed);
+
   return Ok(String::from(parsed));
 }
 
