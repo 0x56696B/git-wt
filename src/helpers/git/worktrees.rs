@@ -60,7 +60,9 @@ pub(crate) fn remove_worktree(
   let worktree: Worktree = get_worktree(repo, worktree_name)?;
 
   let repo_name: &str = get_repo_name(&repo)?;
-  let worktree_branch_name = get_worktree_branch_name(&worktree).map_err(|e| e.to_string())?;
+  let wt_path = worktree.path();
+
+  let worktree_branch_name = get_worktree_branch_name(wt_path).map_err(|e| e.to_string())?;
   let default_branch_name: String = get_default_branch_name(repo_name)?;
 
   // let mut prune_options = WorktreePruneOptions::new();
@@ -98,7 +100,7 @@ pub(crate) fn remove_worktree(
   return Ok(());
 }
 
-fn get_worktree(repo: &Repository, worktree_name: &str) -> Result<Worktree, String> {
+pub(crate) fn get_worktree(repo: &Repository, worktree_name: &str) -> Result<Worktree, String> {
   let contains_wt = repo
     .worktrees()
     .map_err(|e| e.message().to_string())?

@@ -1,6 +1,6 @@
 use std::{path::Path, process::Command};
 
-use git2::{Branch, BranchType, Commit, Oid, Repository, Worktree};
+use git2::{Branch, BranchType, Commit, Oid, Repository};
 
 use super::{
   config::{add_config_entry, get_config_entry},
@@ -41,32 +41,16 @@ pub(crate) fn get_default_branch_name(repo_name: &str) -> Result<String, String>
   return Ok(String::from(parsed));
 }
 
-pub(crate) fn get_worktree_branch_name(worktree: &Worktree) -> Result<String, String> {
-  let worktree_path: &Path = &worktree.path();
-
-  return get_branch_name_from_path(worktree_path);
-}
-
-//NOTE: No way to get branch name from git2-rs, for now
-pub(crate) fn get_branch_name_from_path(path: &Path) -> Result<String, String> {
-  let output = Command::new("git")
-    .arg("-C")
-    .arg(path)
-    .arg("rev-parse")
-    .arg("--abbrev-ref")
-    .arg("HEAD")
-    .output()
-    .map_err(|e| format!("Failed to execute git command: {}", e))?;
-
-  if output.status.success() {
-    let branch_name = String::from_utf8_lossy(&output.stdout).trim().to_string();
-
-    Ok(branch_name)
-  } else {
-    let stderr = String::from_utf8_lossy(&output.stderr);
-
-    Err(format!("Git command failed: {}", stderr))
-  }
+pub(crate) fn get_worktree_branch_name(wt_path: &Path) -> Result<String, String> {
+  return Repository::open(wt_path)
+    .map_err(|e| e.message().to_string())?
+    .revparse_ext("HEAD")
+    .map_err(|e| e.message().to_string())?
+    .1
+    .ok_or("No reference found for HEAD".to_string())?
+    .shorthand()
+    .map(|x| x.to_string())
+    .ok_or("No shorthand for reference".to_string());
 }
 
 pub(crate) fn detect_worktree_merged(
