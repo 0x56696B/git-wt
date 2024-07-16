@@ -33,7 +33,10 @@ pub fn remove_command(args: RmArgs) -> Result<(), String> {
   }
 
   let _ = execute_config_cmds(repo_name, wt_path, CONFIG_KEY_RM_COMMANDS)?;
+  println!("Successfully executed configured commands for remove");
+
   let _ = remove_worktree(&wt_name, args.force).map_err(|e| e.to_string())?;
+  println!("Successfully removed worktree");
 
   // let _ = prune_worktree(&wt, args.force).map_err(|e| e.to_string())?;
 

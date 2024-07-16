@@ -79,10 +79,11 @@ pub(crate) fn execute_config_cmds(
     get_config_entries(repo_name, config_key)?
       .iter()
       .map(|add_cmd: &String| {
-        let (exec, args) = add_cmd.split_once(" ").unwrap_or((&add_cmd, ""));
+        let (exec, all_args) = add_cmd.split_once(" ").unwrap_or((&add_cmd, ""));
+        let args: Vec<&str> = all_args.split(" ").collect::<Vec<&str>>();
 
         let mut cmd = Command::new(&exec);
-        cmd.current_dir(exec_path).stdout(Stdio::piped()).stderr(Stdio::piped()).arg(&args);
+        cmd.current_dir(exec_path).stdout(Stdio::inherit()).stderr(Stdio::inherit()).args(&args);
 
         return cmd;
       })
