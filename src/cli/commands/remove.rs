@@ -23,9 +23,6 @@ pub fn remove_command(args: RmArgs) -> Result<(), String> {
   let wt_name: &str = wt.name().ok_or("Unable to get worktree name")?;
   let wt_path: &str = wt.path().to_str().ok_or("Unable to get Worktree path".to_string())?;
 
-  println!("WT Name: {}", &wt_name);
-  println!("WT Path: {}", &wt_path);
-
   if !args.force {
     let wt_branch_name = get_wt_branch_name(&wt.path())?;
     let merged: bool = detect_wt_merged(&repo, &wt_branch_name, &default_branch_name)?;

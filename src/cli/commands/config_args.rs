@@ -32,4 +32,8 @@ pub struct ConfigArgs {
   /// Configure commands to run to open a worktree
   #[arg(short, long)]
   pub open_commands: Vec<String>,
+
+  /// List configured commands for the current repo
+  #[arg(short, long)]
+  pub list: bool,
 }

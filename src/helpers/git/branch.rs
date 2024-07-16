@@ -67,8 +67,6 @@ pub(crate) fn detect_wt_merged(
   let wt_branch =
     repo.find_branch(wt_branch_name, BranchType::Local).map_err(|e| e.message().to_string())?;
 
-  println!("wt: {:?}", wt_branch.name());
-
   let wt_commit = wt_branch.get().peel_to_commit().map_err(|e| e.message().to_string())?;
 
   let merge_base: Oid =

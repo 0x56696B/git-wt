@@ -30,6 +30,24 @@ pub fn config_command(args: ConfigArgs) -> Result<(), String> {
       save_multi_var_config(&mut config, repo_name, CONFIG_KEY_EXCLUDE_FILES, args.copy_exclude)?;
   }
 
+  if args.list {
+    let _ = list_config(&config, repo_name);
+  }
+
+  return Ok(());
+}
+
+fn list_config(config: &Config, repo_name: &str) -> Result<(), String> {
+  let mut entries = config.entries(Some(repo_name)).map_err(|e| e.message().to_string())?;
+
+  while let Some(entry) = entries.next() {
+    let entry = entry.map_err(|e| e.message().to_string())?;
+    let entry_name = entry.name().ok_or("Unable to parse entry name".to_string())?;
+    let entry_value = entry.value().ok_or("Unable to parse entry value".to_string())?;
+
+    println!("{} => {}", entry_name, entry_value);
+  }
+
   return Ok(());
 }
 

@@ -9,8 +9,7 @@ use commands::Commands;
 #[command(version)]
 #[command(next_line_help = true)]
 #[command(help_template = "\
-{about}
-
+{about-with-newline}
 {usage-heading} {usage}
 
 {all-args}
