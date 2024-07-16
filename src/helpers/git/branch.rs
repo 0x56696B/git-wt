@@ -41,7 +41,7 @@ pub(crate) fn get_default_branch_name(repo_name: &str) -> Result<String, String>
   return Ok(String::from(parsed));
 }
 
-pub(crate) fn get_worktree_branch_name(wt_path: &Path) -> Result<String, String> {
+pub(crate) fn get_wt_branch_name(wt_path: &Path) -> Result<String, String> {
   return Repository::open(wt_path)
     .map_err(|e| e.message().to_string())?
     .revparse_ext("HEAD")
@@ -53,26 +53,26 @@ pub(crate) fn get_worktree_branch_name(wt_path: &Path) -> Result<String, String>
     .ok_or("No shorthand for reference".to_string());
 }
 
-pub(crate) fn detect_worktree_merged(
-  bare_repo: &Repository,
-  worktree_branch_name: &str,
+pub(crate) fn detect_wt_merged(
+  repo: &Repository,
+  wt_branch_name: &str,
   main_branch_name: &str,
 ) -> Result<bool, String> {
-  let main_branch: Branch = bare_repo
-    .find_branch(main_branch_name, BranchType::Local)
-    .map_err(|e| e.message().to_string())?;
+  let main_branch: Branch =
+    repo.find_branch(main_branch_name, BranchType::Local).map_err(|e| e.message().to_string())?;
+
   let main_commit: Commit =
     main_branch.get().peel_to_commit().map_err(|e| e.message().to_string())?;
 
-  let worktree_branch = bare_repo
-    .find_branch(worktree_branch_name, BranchType::Local)
-    .map_err(|e| e.message().to_string())?;
-  let worktree_commit =
-    worktree_branch.get().peel_to_commit().map_err(|e| e.message().to_string())?;
+  let wt_branch =
+    repo.find_branch(wt_branch_name, BranchType::Local).map_err(|e| e.message().to_string())?;
 
-  let merge_base: Oid = bare_repo
-    .merge_base(main_commit.id(), worktree_commit.id())
-    .map_err(|e| e.message().to_string())?;
+  println!("wt: {:?}", wt_branch.name());
 
-  return Ok(merge_base == worktree_commit.id());
+  let wt_commit = wt_branch.get().peel_to_commit().map_err(|e| e.message().to_string())?;
+
+  let merge_base: Oid =
+    repo.merge_base(main_commit.id(), wt_commit.id()).map_err(|e| e.message().to_string())?;
+
+  return Ok(merge_base == wt_commit.id());
 }

@@ -2,11 +2,7 @@ use std::{env, path::PathBuf, process::Command};
 
 use git2::{Repository, Worktree};
 
-use super::{
-  branch::{detect_worktree_merged, get_default_branch_name, get_worktree_branch_name},
-  general::escape_branch_name,
-  repo::get_repo_name,
-};
+use super::{branch::get_default_branch_name, general::escape_branch_name};
 
 //TODO: Pull from cache
 pub fn get_default_worktree(repo_name: &str) -> Result<Repository, String> {
@@ -52,39 +48,10 @@ pub(crate) fn create_new_worktree(
   return Ok(worktree);
 }
 
-pub(crate) fn remove_worktree(
-  repo: &Repository,
-  worktree_name: &str,
-  force: bool,
-) -> Result<(), String> {
-  let worktree: Worktree = get_worktree(repo, worktree_name)?;
-
-  let repo_name: &str = get_repo_name(&repo)?;
-  let wt_path = worktree.path();
-
-  let worktree_branch_name = get_worktree_branch_name(wt_path).map_err(|e| e.to_string())?;
-  let default_branch_name: String = get_default_branch_name(repo_name)?;
-
-  // let mut prune_options = WorktreePruneOptions::new();
-  // prune_options.working_tree(true);
-
-  if !force {
-    let merged =
-      detect_worktree_merged(repo, &worktree_branch_name, &default_branch_name).map_err(|e| e)?;
-
-    if !merged {
-      return Err(format!("Worktree {0} has not been merged to {1} branch. Use --force to override or merge it with {1}", worktree_name, default_branch_name));
-    }
-
-    // let prunable = worktree.is_prunable(Some(&mut prune_options)).unwrap_or_else(|_| false);
-    // if !prunable {
-    //   return Err(format!("Worktree {} is not prunable. Use --force to override", worktree_name));
-    // }
-  }
-
+pub(crate) fn remove_worktree(wt_name: &str, force: bool) -> Result<(), String> {
   // NOTE: Remove still doesn't exist in the git2-rs lib
   let mut cmd = Command::new("git");
-  cmd.arg("worktree").arg("remove").arg(&worktree_name);
+  cmd.arg("worktree").arg("remove").arg(&wt_name);
 
   if force {
     cmd.arg("--force");
@@ -92,11 +59,23 @@ pub(crate) fn remove_worktree(
 
   let output = cmd.output().expect("Failed to execute remove worktree command");
   if !output.status.success() {
-    return Err(format!("Unable to remove worktree at path {}", &worktree_name));
+    return Err(format!("Unable to remove worktree at path {}", &wt_name));
   }
 
-  // worktree.prune(Some(&mut prune_options));
+  return Ok(());
+}
 
+pub(crate) fn prune_worktree(_wt: &Worktree, _force: bool) -> Result<(), String> {
+  // let mut prune_options = WorktreePruneOptions::new();
+  // prune_options.working_tree(true);
+  //
+  // let prunable = worktree.is_prunable(Some(&mut prune_options)).unwrap_or_else(|_| false);
+  // if !prunable || !force {
+  //   return Err(format!("Worktree {} is not prunable. Use --force to override", worktree_name));
+  // }
+  //
+  // worktree.prune(Some(&mut prune_options));
+  //
   return Ok(());
 }
 
