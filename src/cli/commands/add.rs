@@ -1,22 +1,31 @@
 use std::{collections::HashSet, path::PathBuf};
 
-use git2::{Repository, Worktree};
+use git2::{RemoteCallbacks, Repository, Worktree};
 
 use super::AddArgs;
 use crate::helpers::{
   copy_funcs::copy_files,
   git::{
+    auth::get_auth_callback,
     config::{execute_config_cmds, get_wt_config},
     config_keys::{CONFIG_KEY_ADD_COMMANDS, CONFIG_KEY_EXCLUDE_FILES},
     ignored::get_files_for_cp,
     repo::{get_bare_git_repo, get_repo_name},
-    worktrees::{create_new_worktree, get_default_worktree},
+    worktrees::{create_new_worktree, get_default_worktree, update_default_worktree},
   },
 };
 
-/// Function to execute Command::Add
 pub fn add_command(args: AddArgs) -> Result<(), String> {
   let bare_repo: Repository = get_bare_git_repo().map_err(|e| e.to_string())?;
+
+  let repo_name: &str = get_repo_name(&bare_repo)?;
+  let main_branch_repo: Repository = get_default_worktree(repo_name)?;
+
+  if args.update_branch {
+    let auth_callback: RemoteCallbacks<'_> = get_auth_callback();
+    let _ = update_default_worktree(&main_branch_repo, &repo_name, auth_callback)?;
+  }
+
   let worktree: Worktree =
     create_new_worktree(&bare_repo, args.new_branch_name.as_str(), args.force)
       .map_err(|e| e.to_string())?;
@@ -24,8 +33,6 @@ pub fn add_command(args: AddArgs) -> Result<(), String> {
   println!("New Worktree Created: {:?}; Repo: {:?}", worktree.path(), bare_repo.path());
 
   let excluded_files = get_excluded_files(&bare_repo)?;
-  let repo_name: &str = get_repo_name(&bare_repo)?;
-  let main_branch_repo: Repository = get_default_worktree(repo_name)?;
 
   let ignored_files: HashSet<PathBuf> =
     get_files_for_cp(&main_branch_repo, &args.exclude, &excluded_files)

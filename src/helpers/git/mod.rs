@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod branch;
 pub mod config;
 pub mod config_keys;

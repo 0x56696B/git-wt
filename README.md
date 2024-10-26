@@ -56,18 +56,28 @@ Run `git wt <command> --help` for more information regarding a particular comman
 [x] In the config file, allow to exclude copying of certain git ignored files on `git wt add`
 
 ## Shower Thoughts
+
 TODO: Add tracing (rust::tracing)
+
 TODO: Add some kind of rollback mechanism when something fails (libgit2 transactions?)
+
 TODO: Think of maybe using channels to async print stuff to stdout/stderr to avoid colored functions
+
 TODO: Optionally pull main before creation of new worktree
+
 TODO: Make work without main branch present (first time repo)
+
 TODO: Create git-wt pull to pull as bare repo properly
+
 TODO: Make so creation can take place in a branch, but still recognize the bare repo folder (ex: from some-branch branch to be able to create a new one, without showing the "not a bare repo" error)
+
 TODO: Add flag to ignore excluded files in `git-wt add`
 
 FIX: `git wt config -e "node_modules" "cache"` doesn't work, but `git wt config -e "node_modules" -e "cache"` works
 
 TODO: Make `git-wt switch` to run a script in the active worktree (ex: `main` wt runs `docker compose up`, but I can't do the same in another wt, until I `docker compose down` in `main`)
+
+TODO: You can store .env files in the GIT_DIR (main folder with the branches) and symlink them for each branch, so they are always shared
 
 ## License
 This project is licensed under the GPL-3.0 License - see the LICENSE file for details.

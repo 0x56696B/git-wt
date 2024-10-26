@@ -7,7 +7,7 @@ pub struct RmArgs {
   /// This is the path you see at the git root, not the branch name (example: feat-feature-1)
   ///
   /// WARNING: Will fail, if it detects worktree isn't merged to default branch (main, for example)
-  pub worktree_name: String,
+  pub worktree_names: Vec<String>,
 
   /// Force removal, even if not merged
   ///
