@@ -1,7 +1,13 @@
 use std::{
-  fs::{copy, create_dir_all},
+  fs::{copy, create_dir_all, read_link},
+  io::{self, Error, ErrorKind},
   path::{Path, PathBuf},
 };
+
+#[cfg(unix)]
+use std::os::unix::fs as unix_fs;
+#[cfg(windows)]
+use std::os::windows::fs as windows_fs;
 
 /// Returns: Copied files in tuple (src, dest)
 pub fn copy_files(
@@ -39,7 +45,7 @@ pub fn copy_files(
     //   println!("Ready for copying: {:?} - {:?}", &src.display(), &dest.display());
     // })
     .map(|(src, dest)| -> Result<String, String> {
-      let copy_res = copy(&src, &dest)
+      let copy_res = copy_file_or_symlink(&src, &dest)
         .map(|_| format!("Copied: {:?} -> {:?}", src.to_string_lossy(), dest.to_string_lossy()))
         .map_err(|e| format!("Failed to copy from {} to {}: {}", src.display(), dest.display(), e));
 
@@ -50,4 +56,30 @@ pub fn copy_files(
       Err(err) => println!("{}", err),
     })
     .collect::<Vec<Result<String, String>>>();
+}
+
+fn copy_file_or_symlink(src: &PathBuf, dest: &PathBuf) -> io::Result<u64> {
+  if src.is_symlink() {
+    // Read the symlink target path
+    let target = read_link(src)?;
+
+    // Create a new symlink at the destination pointing to the same target
+    #[cfg(unix)]
+    unix_fs::symlink(&target, &dest)?;
+
+    #[cfg(windows)]
+    {
+      if target.is_dir() {
+        windows_fs::symlink_dir(&target, dest)?;
+      } else {
+        windows_fs::symlink_file(&target, dest)?;
+      }
+    }
+  } else if src.is_file() {
+    return copy(&src, &dest);
+  } else {
+    return Err(Error::new(ErrorKind::Other, "Unsupported file type"));
+  }
+
+  return Ok(0);
 }

@@ -1,10 +1,10 @@
 use std::{env, path::PathBuf, process::Command};
 
-use git2::{Repository, Worktree};
+use git2::{FetchOptions, RemoteCallbacks, Repository, Worktree};
 
 use super::{branch::get_default_branch_name, general::escape_branch_name};
 
-//TODO: Pull from cache
+// TODO: Pull from cache
 pub fn get_default_worktree(repo_name: &str) -> Result<Repository, String> {
   let mut current_dir: PathBuf = env::current_dir().map_err(|e| e.to_string())?;
   let default_branch_name: String = get_default_branch_name(repo_name)?;
@@ -93,4 +93,55 @@ pub(crate) fn get_worktree(repo: &Repository, worktree_name: &str) -> Result<Wor
   }
 
   return repo.find_worktree(&worktree_name).map_err(|e| e.message().to_string());
+}
+
+pub(crate) fn update_default_worktree(
+  default_repo: &Repository,
+  repo_name: &str,
+  auth_callback: RemoteCallbacks,
+) -> Result<(), String> {
+  println!("branch name {}", &repo_name);
+
+  let mut remote = default_repo.find_remote("origin").map_err(|x| x.message().to_string())?;
+  let default_branch_name: String = get_default_branch_name(repo_name)?;
+
+  println!("Updating default branch: {}", default_branch_name);
+
+  let mut fetch_options = FetchOptions::new();
+  fetch_options.remote_callbacks(auth_callback);
+
+  remote
+    .fetch(&[&default_branch_name], Some(&mut fetch_options), None)
+    .map_err(|x| x.message().to_string())?;
+
+  let branch = default_repo
+    .find_branch(&default_branch_name, git2::BranchType::Local)
+    .map_err(|x| x.message().to_string())?;
+
+  let fetch_head =
+    default_repo.find_reference("FETCH_HEAD").map_err(|x| x.message().to_string())?;
+
+  let fetch_commit =
+    default_repo.reference_to_annotated_commit(&fetch_head).map_err(|x| x.message().to_string())?;
+
+  let analysis =
+    default_repo.merge_analysis(&[&fetch_commit]).map_err(|x| x.message().to_string())?;
+
+  if analysis.0.is_up_to_date() {
+    println!("Already up to date.");
+  } else if analysis.0.is_fast_forward() {
+    let mut reference = default_repo
+      .find_reference(branch.get().name().unwrap())
+      .map_err(|x| x.message().to_string())?;
+
+    reference
+      .set_target(fetch_commit.id(), "Fast-forward merge")
+      .map_err(|x| x.message().to_string())?;
+
+    println!("Fast-forward merge complete.");
+  } else {
+    println!("Merge required.");
+  }
+
+  return Ok(());
 }
