@@ -2,3 +2,5 @@
 /target
 /bin/*
 !/bin/.gitkeep
+/src/__pycache__
+
