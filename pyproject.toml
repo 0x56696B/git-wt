@@ -11,6 +11,8 @@ license = { file = "LICENSE" }
 requires-python = ">=3.11"
 dependencies = [
     "click>=8.1",
+    "pygit2==1.19.2",
+    "rich==14.3.3"
 ]
 
 [project.optional-dependencies]

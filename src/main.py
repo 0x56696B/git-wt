@@ -1,16 +1,25 @@
 import click
+import logging
 
+from errors.derived_branch_does_not_exist import DeriveBranchDoesNotExist
+from errors.no_fast_forward_merge import NoFastForwardMerge
+from errors.not_bare_repo_err import NotBareRepoErr
+from errors.worktree_creation_err import WorktreeCreationErr
+
+from .helpers.logger import setup_logging
 from .cmds.cmd_config import configure
+from .cmds.cmd_add import add_worktree
 
 @click.group()
 @click.version_option("0.1.0")
 def cli():
     """A git-worktree extension to make using worktrees a pain of the past"""
-    pass
+    setup_logging()
 
 
 @cli.command()
 @click.argument("NEW_BRANCH_NAME", type=str)
+@click.argument("DERIVE_FROM_BRANCH", type=str, required=False)
 @click.option("--force", "-f", is_flag=True, default=False, help="Force checkout, even if branch already exists locally")
 @click.option("--exclude", "-e", type=str, help="""
 Exclude files from being copied over. Provide a comma-seperated list
@@ -19,7 +28,7 @@ Example: `--exclude="node_modules,dist,target,bin"`
 
 WARNING: This can override the config file
 """)
-def add(new_branch_name: str, exclude: list[str]=[],force: bool=False):
+def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], force: bool=False):
     """
     Create a worktree
 
@@ -28,9 +37,40 @@ def add(new_branch_name: str, exclude: list[str]=[],force: bool=False):
     NOTE: Slashes(`/`) in the branch name will be replaced with dash(`-`) to avoid directory nesting
     """
 
-    print("in add cmd: ", new_branch_name, force, exclude)
+    # Take these from config
+    should_nest_dirs: bool = False
+    exclude_files_from_copy: list[str] = exclude or []
 
-    click.echo("NOT IMPLEMENTED, YET!")
+    worktree_creaton_res = add_worktree(
+        new_branch_name,
+        derive_from_branch,
+        should_nest_dirs, 
+        exclude_files_from_copy,
+        force)
+
+    # match typeworktree_creaton_res:
+    #     case NotBareRepoErr:
+
+    log = logging.getLogger(__name__)
+
+    log.debug("Repository creation result; result=%s", worktree_creaton_res)
+
+    match type(worktree_creaton_res):
+        case NotBareRepoErr():
+            log.error("Cannot find a BARE git repository in the current working directory.")
+        case WorktreeCreationErr():
+            log.error("An error occured while trying to create the new branch. Please, try again.")
+        case DeriveBranchDoesNotExist():
+            log.error("The derived branch does not exist. A worktree from it cannot be created.")
+        case NoFastForwardMerge():
+            log.error("The derived branch has conflitcs and cannot fast-forward changes from origin.")
+        case None:
+            log.info("Successfully created new worktree")
+
+
+
+
+
 
 
 @cli.command()

@@ -4,5 +4,4 @@ def configure(add_commands: str, remove_commands: str, copy_exclude: str, list: 
     if list:
         pass
 
-    pass
 
