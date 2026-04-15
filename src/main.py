@@ -1,14 +1,16 @@
 import click
 import logging
 
-from errors.derived_branch_does_not_exist import DeriveBranchDoesNotExist
-from errors.no_fast_forward_merge import NoFastForwardMerge
-from errors.not_bare_repo_err import NotBareRepoErr
-from errors.worktree_creation_err import WorktreeCreationErr
+from result import Err, Ok
 
+from .errors.derived_branch_does_not_exist import DeriveBranchDoesNotExist
+from .errors.no_fast_forward_merge import NoFastForwardMerge
+from .errors.not_bare_repo_err import NotBareRepoErr
+from .errors.worktree_creation_err import WorktreeCreationErr
 from .helpers.logger import setup_logging
 from .cmds.cmd_config import configure
-from .cmds.cmd_add import add_worktree
+from .cmds.add.cmd_add import add_worktree
+from .cmds.add.args_add import AddArgs
 
 @click.group()
 @click.version_option("0.1.0")
@@ -41,36 +43,41 @@ def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], fo
     should_nest_dirs: bool = False
     exclude_files_from_copy: list[str] = exclude or []
 
-    worktree_creaton_res = add_worktree(
+    add_args: AddArgs = AddArgs(
         new_branch_name,
         derive_from_branch,
         should_nest_dirs, 
         exclude_files_from_copy,
-        force)
+        force
+    )
 
-    # match typeworktree_creaton_res:
-    #     case NotBareRepoErr:
+    worktree_creaton_res = add_worktree(add_args)
 
     log = logging.getLogger(__name__)
 
     log.debug("Repository creation result; result=%s", worktree_creaton_res)
 
-    match type(worktree_creaton_res):
-        case NotBareRepoErr():
+
+    match worktree_creaton_res:
+        case Err(NotBareRepoErr()):
             log.error("Cannot find a BARE git repository in the current working directory.")
-        case WorktreeCreationErr():
+
+        case Err(WorktreeCreationErr()):
             log.error("An error occured while trying to create the new branch. Please, try again.")
-        case DeriveBranchDoesNotExist():
+
+        case Err(DeriveBranchDoesNotExist()):
             log.error("The derived branch does not exist. A worktree from it cannot be created.")
-        case NoFastForwardMerge():
+
+        case Err(NoFastForwardMerge()):
             log.error("The derived branch has conflitcs and cannot fast-forward changes from origin.")
-        case None:
+
+        case Err(_):
+            log.fatal("Something has gone horribly wrong. Aporting immediately!")
+
+            exit(-1)
+
+        case Ok(None):
             log.info("Successfully created new worktree")
-
-
-
-
-
 
 
 @cli.command()
