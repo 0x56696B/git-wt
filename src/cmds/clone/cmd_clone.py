@@ -16,26 +16,23 @@ from .result_clone import CloneRespositoryErr
 def clone_repository(clone_args: CloneArgs) -> Result[pg.Repository, CloneRespositoryErr]:
     log = logging.getLogger(__name__)
 
-    log.debug("Attempting to create a repository; url=%s, dest=%s", clone_args.repository_link, clone_args.dest)
+    log.debug("Attempting to create a repository; url=%s, dest=%s", clone_args.repository_link, clone_args.dest.absolute())
 
-    dest = Path(clone_args.dest)
-    log.debug("Created a destination path; dest=%s", dest.absolute())
-
-    if dest.is_file(follow_symlinks=True):
+    if clone_args.dest.is_file(follow_symlinks=True):
         return Err(PathCannotBeFile())
 
-    if not dest.exists(follow_symlinks=True):
-        os.makedirs(dest, exist_ok=True)
+    if not clone_args.dest.exists(follow_symlinks=True):
+        os.makedirs(clone_args.dest, exist_ok=True)
 
-    if any(os.scandir(dest)):
+    if any(os.scandir(clone_args.dest)):
         return Err(DirectoryNotEmpty())
 
 
     repo: pg.Repository | None = None
     try:
         repo = pg.clone_repository(
-            url=clone_args.repository_link, 
-            path=clone_args.dest,
+            url=clone_args.repository_link,
+            path=str( clone_args.dest.absolute() ),
             bare=True,
             proxy=True,
             callbacks=AuthAgentCallback()
@@ -46,6 +43,6 @@ def clone_repository(clone_args: CloneArgs) -> Result[pg.Repository, CloneRespos
 
         return Err(DirectoryNotEmpty())
 
-    assert Path(repo.path).absolute() == dest.absolute(), "A BARE repository must be created at the designated path"
+    assert Path(repo.path).absolute() == clone_args.dest.absolute(), "A BARE repository must be created at the designated path"
 
     return Ok(repo)
