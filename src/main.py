@@ -3,14 +3,22 @@ import logging
 
 from result import Err, Ok
 
+from .errors.path_cannot_be_file import PathCannotBeFile
+from .errors.directory_not_empty import DirectoryNotEmpty
 from .errors.derived_branch_does_not_exist import DeriveBranchDoesNotExist
 from .errors.no_fast_forward_merge import NoFastForwardMerge
 from .errors.not_bare_repo_err import NotBareRepoErr
 from .errors.worktree_creation_err import WorktreeCreationErr
+
 from .helpers.logger import setup_logging
 from .cmds.cmd_config import configure
+
 from .cmds.add.cmd_add import add_worktree
 from .cmds.add.args_add import AddArgs
+
+from .cmds.clone.cmd_clone import clone_repository
+from .cmds.clone.args_clone import CloneArgs
+
 
 @click.group()
 @click.version_option("0.1.0")
@@ -54,9 +62,7 @@ def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], fo
     worktree_creaton_res = add_worktree(add_args)
 
     log = logging.getLogger(__name__)
-
     log.debug("Repository creation result; result=%s", worktree_creaton_res)
-
 
     match worktree_creaton_res:
         case Err(NotBareRepoErr()):
@@ -117,15 +123,47 @@ def config(add_commands: str, remove_commands: str, copy_exclude: str, list: boo
 
 
 @cli.command()
-# @click.argument("repository", help="The (possibly remote) <repository> to clone from.")
-# @click.argument("directory", help="The name of a new directory to clone into.")
-def clone(_repository: str, _directory: str):
+@click.argument("REPOSITORY", required=True, type=str)
+@click.argument("DIRECTORY", required=True, type=str)
+def clone(repository: str, directory: str):
     """
     Clone a repository as a bare-repo.\n
-    Works as replacement for `git clone <repo> <directory>`.
+    Works as replacement for `git clone <repo> <directory>`.\n
+    Will create the directory, if it doesn't exist.
     """
 
-    click.echo("NOT IMPLEMENTED, YET!")
+    log = logging.getLogger(__name__)
+
+    clone_args: CloneArgs = CloneArgs(
+        repository_link=repository,
+        dest=directory
+    )
+
+    clone_res = clone_repository(clone_args)
+
+    log.debug("Repository cloning result; result=%s", clone_res)
+
+    match clone_res:
+        case Ok(repo):
+            log.info("Repository clonned successfully; repo_workdir=%s, repo_path=%s", repo.workdir, repo.path)
+
+            exit(0)
+
+        case Err(PathCannotBeFile()):
+            log.error("The provided path cannot be a file.")
+
+            exit(4)
+
+        case Err(DirectoryNotEmpty()):
+            log.error("Direcotry is not empty. Cloning in it may overwrite files")
+
+            exit(5)
+
+        case Err(_):
+            log.fatal("Something has gone horribly wrong. Aporting immediately!")
+
+            exit(1)
+
 
 
 @cli.command()
