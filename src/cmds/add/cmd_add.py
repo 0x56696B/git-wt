@@ -111,7 +111,7 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
     log.debug("Derived repository opened; derived_repository=%s; derived_repo_workdir=%s", derived_repo, derived_repo.workdir)
 
     git_ignored_files = [Path(derived_repo.workdir, ignored) for ignored in derived_repo.status(untracked_files="no", ignored=True)]
-    git_ignored_filtered_files = [ignored_file for ignored_file in git_ignored_files if not any(fnmatch(ignored_file.name, excluded_glob) for excluded_glob in add_args.exclude_files_from_copy)]
+    git_ignored_filtered_files = [ignored_file for ignored_file in git_ignored_files if not any(fnmatch(ignored_file.name, excluded_glob) for excluded_glob in add_args.exclude)]
 
     log.debug("Found git ignored files from derived branch; git_ignored_files=%s", git_ignored_filtered_files)
 
