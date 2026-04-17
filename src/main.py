@@ -46,7 +46,7 @@ def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], fo
     add_args: AddArgs = AddArgs(
         new_branch_name,
         derive_from_branch,
-        should_nest_dirs, 
+        should_nest_dirs,
         exclude_files_from_copy,
         force
     )
