@@ -242,6 +242,10 @@ def clone(repository: str, directory: str):
             log.error("Direcotry is not empty. Cloning in it may overwrite files")
             exit(ExitCode.ERR_DIR_NOT_EMPTY)
 
+        case Err(WorktreeCreationErr()):
+            log.error("Repository cloned but failed to create the default worktree.")
+            exit(ExitCode.ERR_WORKTREE)
+
         case Err(_):
             log.fatal("Something has gone horribly wrong. Aporting immediately!")
             exit(ExitCode.ERR_GENERAL)
