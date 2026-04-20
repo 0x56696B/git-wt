@@ -46,7 +46,7 @@ def cli():
 @click.argument("NEW_BRANCH_NAME", type=str)
 @click.argument("DERIVE_FROM_BRANCH", type=str, required=False)
 @click.option("--force", "-f", is_flag=True, default=False, help="Force checkout, even if branch already exists locally")
-@click.option("--exclude", "-e", type=str, help="""
+@click.option("--exclude", "-e", type=str, default=[], help="""
 Exclude files from being copied over. Provide a comma-seperated list
 
 Example: `--exclude="node_modules,dist,target,bin"`

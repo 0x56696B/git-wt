@@ -77,8 +77,6 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
 
 
     new_worktree: pg.Worktree | None = None
-    # FIXME: Remove after testing
-    branch_name = branch_name + str( uuid4() ).split('-')[-1]
     wt_path = Path(git_dir, branch_name).absolute()
 
     log.debug("Preparing to create worktree; worktree_path=%s, worktree_name=%s, repository=%s", wt_path, branch_name, bare_repo)
