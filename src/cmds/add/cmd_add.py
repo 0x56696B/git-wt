@@ -77,7 +77,7 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
 
 
     new_worktree: pg.Worktree | None = None
-    # TODO: Remove after testing
+    # FIXME: Remove after testing
     branch_name = branch_name + str( uuid4() ).split('-')[-1]
     wt_path = Path(git_dir, branch_name).absolute()
 
@@ -86,7 +86,7 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
     try:
         new_worktree = bare_repo.add_worktree(branch_name, wt_path)
 
-        log.info("Successully created a worktree; name=%s", new_worktree.name)
+        log.info("Successully created a worktree; worktree_name=%s, branch_name=%s", new_worktree.name, branch_name)
 
     except OSError:
         log.error("Worktree opening failed; worktree_path=%s, worktree_name=%s, repository=%s", wt_path, branch_name, bare_repo)
@@ -100,8 +100,8 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
 
 
     assert new_worktree is not None, "The new worktree must be created. Something wasn not handled correctly"
-    assert new_worktree.name is branch_name, "Worktree name must equal to the branch name provided"
-    assert new_worktree.path is str(wt_path), "The path of the worktree must be the same as the given path for worktree creation"
+    assert new_worktree.name == branch_name, "Worktree name must equal to the branch name provided"
+    assert new_worktree.path == str(wt_path), "The path of the worktree must be the same as the given path for worktree creation"
 
 
     derive_branch_path: Path = Path(git_dir, add_args.derive_from_branch)
