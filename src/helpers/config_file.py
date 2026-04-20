@@ -100,6 +100,35 @@ def write_config_file(config: configparser.RawConfigParser, path: Path) -> Resul
         return Err(ConfigWriteErr())
 
 
+def remove_repo_entry(repo_path: str) -> Result[None, ConfigReadErr | ConfigWriteErr | ConfigPermErr]:
+    log = logging.getLogger(__name__)
+
+    ensure_res = ensure_config_exists()
+    match ensure_res:
+        case Err(_) as err:
+            return err
+
+        case Ok(config_path):
+            pass
+
+    read_res = read_config(config_path)
+    match read_res:
+        case Err(_) as err:
+            return err
+
+        case Ok(config):
+            pass
+
+    if config.has_section(repo_path):
+        config.remove_section(repo_path)
+
+        log.debug("Removed config section; repo_path=%s", repo_path)
+
+        return write_config_file(config, config_path)
+
+    return Ok(None)
+
+
 def ensure_repo_entry(repo_path: Path) -> Result[None, ConfigReadErr | ConfigWriteErr | ConfigPermErr]:
     """Ensure a section exists in the config for repo_path. Called after clone."""
     ensure_res = ensure_config_exists()

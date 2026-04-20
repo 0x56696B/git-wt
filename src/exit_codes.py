@@ -19,3 +19,5 @@ class ExitCode(IntEnum):
     ERR_CONFIG_READ     = 172  # Failed to read config file
     ERR_CONFIG_WRITE    = 173  # Failed to write config file
     ERR_CONFIG_PERM     = 174  # Insufficient permissions on config file
+    ERR_UNMERGED        = 175  # Branch has commits not present in default branch
+    ERR_WORKTREE_MISSING = 176 # Worktree or branch not found

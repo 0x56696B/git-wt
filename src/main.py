@@ -14,6 +14,9 @@ from .errors.worktree_creation_err import WorktreeCreationErr
 from .errors.config_read_err import ConfigReadErr
 from .errors.config_write_err import ConfigWriteErr
 from .errors.config_perm_err import ConfigPermErr
+from .errors.unmerged_changes_err import UnmergedChangesErr
+from .errors.worktree_not_found_err import WorktreeNotFoundErr
+from .errors.worktree_remove_err import WorktreeRemoveErr
 
 from .exit_codes import ExitCode
 from .helpers.logger import setup_logging
@@ -27,6 +30,9 @@ from .cmds.clone.args_clone import CloneArgs
 
 from .cmds.config.cmd_config import configure
 from .cmds.config.args_config import ConfigArgs
+
+from .cmds.rm.cmd_rm import remove_worktree
+from .cmds.rm.args_rm import RmArgs
 
 
 @click.group()
@@ -246,13 +252,47 @@ def clone(repository: str, directory: str):
 
 
 @cli.command()
-@click.argument("BRANCH_NAME", required=True, type=str)
-def rm(branch_name: str):
-    """Remove a worktree."""
+@click.argument("BRANCH_NAMES", nargs=-1, required=True, type=str)
+@click.option("--force", "-f", is_flag=True, default=False, help="Remove even if the branch has commits not present in the default branch.")
+def rm(branch_names: tuple[str, ...], force: bool):
+    """Remove one or more worktrees."""
 
-    # TODO: Remove the repo's section from ~/.gitconfig_wt when this is implemented.
+    log = logging.getLogger(__name__)
 
-    click.echo("NOT IMPLEMENTED, YET!")
+    rm_args: RmArgs = RmArgs(
+        branch_names=branch_names,
+        current_working_dir=os.getcwd(),
+        force=force
+    )
+
+    rm_res = remove_worktree(rm_args)
+
+    log.debug("Worktree removal result; result=%s", rm_res)
+
+    match rm_res:
+        case Err(NotBareRepoErr()):
+            log.error("Cannot find a BARE git repository in the current working directory.")
+            exit(ExitCode.ERR_NOT_BARE_REPO)
+
+        case Err(WorktreeNotFoundErr()):
+            log.error("Worktree not found.")
+            exit(ExitCode.ERR_WORKTREE_MISSING)
+
+        case Err(UnmergedChangesErr()):
+            log.error("Branch has commits not in the default branch. Use --force to override.")
+            exit(ExitCode.ERR_UNMERGED)
+
+        case Err(WorktreeRemoveErr()):
+            log.error("Failed to remove worktree.")
+            exit(ExitCode.ERR_WORKTREE)
+
+        case Err(_):
+            log.fatal("Something has gone horribly wrong. Aporting immediately!")
+            exit(ExitCode.ERR_GENERAL)
+
+        case Ok(None):
+            log.info("Worktrees successfully cleaned up; branch_names=%s", branch_names)
+            exit(ExitCode.SUCCESS)
 
 
 @cli.command()
