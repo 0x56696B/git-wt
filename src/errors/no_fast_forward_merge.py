@@ -1,3 +1,3 @@
-class NoFastForwardMerge():
+class NoFastForwardMerge:
     pass
 

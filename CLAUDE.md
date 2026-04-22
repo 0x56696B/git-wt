@@ -32,7 +32,7 @@ Replaces manual `git worktree` commands with opinionated workflow: clone bare re
 - `click>=8.1` — CLI framework
 - `pygit2==1.19.2` — libgit2 bindings (import as `pg`)
 - `rich==14.3.3` — terminal output, logging handler
-- `returns[compatible-mypy]==0.17.0` — Result type (but actual import is `from result import Result, Ok, Err`)
+- `result==0.17.0` — Result type (`from result import Result, Ok, Err`)
 - Dev: `pytest>=8.0`, `pytest-cov`
 
 ## Architecture
@@ -105,11 +105,8 @@ Constructs Args dataclass -> calls command function -> matches result -> logs + 
 
 ## Known Issues
 
-- "Aporting" typo in `main.py` catch-all errors (lines 105, 186, 226, 299, 371) — should be "Aborting"
 - `clone` reuses `DirectoryNotEmpty` for `pg.GitError` catch (possible wrong error type)
-- `CloneRespositoryErr` has typo (Respository -> Repository)
 - Tests directory empty — only `.gitkeep`
-- README installation instructions reference Rust/Cargo (outdated)
 
 ## Goals / Roadmap
 
@@ -141,3 +138,9 @@ From README shower thoughts + current state:
 - Read existing code before modifying
 - Test with `LOG_LEVEL=DEBUG python3 -m src.main <cmd>` for verification
 - Match existing spacing/formatting style precisely
+
+## Commits
+
+- One line commit messages. No multi-line bodies unless explicitly asked.
+- No author/co-author lines in commit messages.
+- Error classes use `class Foo:` (no empty parens), except `@dataclass()` which keeps parens.

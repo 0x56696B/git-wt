@@ -1,2 +1,2 @@
-class DeriveBranchDoesNotExist():
+class DeriveBranchDoesNotExist:
     pass

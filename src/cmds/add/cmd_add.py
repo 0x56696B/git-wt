@@ -6,7 +6,6 @@ import pygit2 as pg
 from result import Result, Ok, Err
 from shutil import copy2, copytree
 from pathlib import Path
-from uuid import uuid4
 
 from .args_add import AddArgs
 from .result_add import AddWorktreeError

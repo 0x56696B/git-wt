@@ -11,10 +11,10 @@ from ...errors.worktree_creation_err import WorktreeCreationErr
 from ...helpers.auth_agent_callback import AuthAgentCallback
 
 from .args_clone import CloneArgs
-from .result_clone import CloneRespositoryErr
+from .result_clone import CloneRepositoryErr
 
 
-def clone_repository(clone_args: CloneArgs) -> Result[pg.Repository, CloneRespositoryErr]:
+def clone_repository(clone_args: CloneArgs) -> Result[pg.Repository, CloneRepositoryErr]:
     log = logging.getLogger(__name__)
 
     log.debug("Attempting to create a repository; url=%s, dest=%s", clone_args.repository_link, clone_args.dest.absolute())

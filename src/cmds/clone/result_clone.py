@@ -3,4 +3,4 @@ from ...errors.directory_not_empty import DirectoryNotEmpty
 from ...errors.worktree_creation_err import WorktreeCreationErr
 
 
-CloneRespositoryErr = PathCannotBeFile | DirectoryNotEmpty | WorktreeCreationErr
+CloneRepositoryErr = PathCannotBeFile | DirectoryNotEmpty | WorktreeCreationErr

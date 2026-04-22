@@ -1,2 +1,2 @@
-class PathCannotBeFile():
+class PathCannotBeFile:
     pass

@@ -102,7 +102,7 @@ def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], fo
             exit(ExitCode.ERR_NO_FF_MERGE)
 
         case Err(_):
-            log.fatal("Something has gone horribly wrong. Aporting immediately!")
+            log.fatal("Something has gone horribly wrong. Aborting immediately!")
             exit(ExitCode.ERR_GENERAL)
 
         case Ok(None):
@@ -182,7 +182,7 @@ def config(add_command: tuple[str, ...], remove_command: tuple[str, ...], exclud
             exit(ExitCode.ERR_CONFIG_PERM)
 
         case Err(_):
-            log.fatal("Something has gone horribly wrong. Aporting immediately!")
+            log.fatal("Something has gone horribly wrong. Aborting immediately!")
             exit(ExitCode.ERR_GENERAL)
 
         case Ok(None):
@@ -223,7 +223,7 @@ def clone(repository: str, directory: str):
             exit(ExitCode.ERR_CONFIG_PERM)
 
         case Err(_):
-            log.fatal("Something has gone horribly wrong. Aporting immediately!")
+            log.fatal("Something has gone horribly wrong. Aborting immediately!")
             exit(ExitCode.ERR_GENERAL)
 
         case Ok(_):
@@ -252,7 +252,7 @@ def clone(repository: str, directory: str):
             exit(ExitCode.ERR_WORKTREE)
 
         case Err(_):
-            log.fatal("Something has gone horribly wrong. Aporting immediately!")
+            log.fatal("Something has gone horribly wrong. Aborting immediately!")
             exit(ExitCode.ERR_GENERAL)
 
         case Ok(repo):
@@ -296,7 +296,7 @@ def rm(branch_names: tuple[str, ...], force: bool):
             exit(ExitCode.ERR_WORKTREE)
 
         case Err(_):
-            log.fatal("Something has gone horribly wrong. Aporting immediately!")
+            log.fatal("Something has gone horribly wrong. Aborting immediately!")
             exit(ExitCode.ERR_GENERAL)
 
         case Ok(None):
@@ -368,7 +368,7 @@ def destroy(directory: str, force: bool):
             exit(ExitCode.ERR_CONFIG_PERM)
 
         case Err(_):
-            log.fatal("Something has gone horribly wrong. Aporting immediately!")
+            log.fatal("Something has gone horribly wrong. Aborting immediately!")
             exit(ExitCode.ERR_GENERAL)
 
         case Ok(None):

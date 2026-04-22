@@ -1,2 +1,2 @@
-class NotRepoErr():
+class NotRepoErr:
     pass
