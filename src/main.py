@@ -17,6 +17,8 @@ from .errors.config_perm_err import ConfigPermErr
 from .errors.unmerged_changes_err import UnmergedChangesErr
 from .errors.worktree_not_found_err import WorktreeNotFoundErr
 from .errors.worktree_remove_err import WorktreeRemoveErr
+from .errors.directory_not_found_err import DirectoryNotFoundErr
+from .errors.destroy_err import DestroyErr
 
 from .exit_codes import ExitCode
 from .helpers.logger import setup_logging
@@ -33,6 +35,9 @@ from .cmds.config.args_config import ConfigArgs
 
 from .cmds.rm.cmd_rm import remove_worktree
 from .cmds.rm.args_rm import RmArgs
+
+from .cmds.destroy.cmd_destroy import destroy_repo
+from .cmds.destroy.args_destroy import DestroyArgs
 
 
 @click.group()
@@ -296,6 +301,78 @@ def rm(branch_names: tuple[str, ...], force: bool):
 
         case Ok(None):
             log.info("Worktrees successfully cleaned up; branch_names=%s", branch_names)
+            exit(ExitCode.SUCCESS)
+
+
+@cli.command()
+@click.argument("DIRECTORY", required=True, type=str)
+@click.option("--force", "-f", is_flag=True, default=False, help="Skip confirmation prompt.")
+def destroy(directory: str, force: bool):
+    """
+    Destroy an entire bare-repo worktree directory.
+
+    Removes the DIRECTORY and all its contents (bare repo + all worktrees),
+    then removes the corresponding entry from the git-wt config file
+    (~/.config/git-wt/config.toml).
+
+    \b
+    WARNING: This is irreversible. All worktrees, branches, and uncommitted
+    changes inside DIRECTORY will be permanently deleted.
+
+    \b
+    Example:
+        git wt destroy ~/projects/my-project
+
+    \b
+    This is the inverse of `git wt clone`. Use `git wt rm` to remove
+    individual worktrees instead.
+    """
+
+    log = logging.getLogger(__name__)
+
+    if not force:
+        _ = click.confirm(f"This will permanently delete '{directory}' and all its contents. Continue?", abort=True)
+
+    destroy_args: DestroyArgs = DestroyArgs(
+        directory=directory,
+        force=force
+    )
+
+    destroy_res = destroy_repo(destroy_args)
+
+    log.debug("Destroy result; result=%s", destroy_res)
+
+    match destroy_res:
+        case Err(DirectoryNotFoundErr()):
+            log.error("Directory does not exist; directory=%s", directory)
+            exit(ExitCode.ERR_DIR_NOT_FOUND)
+
+        case Err(NotBareRepoErr()):
+            log.error("Directory is not a bare git repository; directory=%s", directory)
+            exit(ExitCode.ERR_NOT_BARE_REPO)
+
+        case Err(DestroyErr()):
+            log.error("Failed to remove directory; directory=%s", directory)
+            exit(ExitCode.ERR_GENERAL)
+
+        case Err(ConfigReadErr()):
+            log.error("Failed to read the config file.")
+            exit(ExitCode.ERR_CONFIG_READ)
+
+        case Err(ConfigWriteErr()):
+            log.error("Failed to write to the config file.")
+            exit(ExitCode.ERR_CONFIG_WRITE)
+
+        case Err(ConfigPermErr()):
+            log.error("Insufficient permissions to access the config file.")
+            exit(ExitCode.ERR_CONFIG_PERM)
+
+        case Err(_):
+            log.fatal("Something has gone horribly wrong. Aporting immediately!")
+            exit(ExitCode.ERR_GENERAL)
+
+        case Ok(None):
+            log.info("Bare repository destroyed successfully; directory=%s", directory)
             exit(ExitCode.SUCCESS)
 
 
