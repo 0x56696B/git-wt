@@ -1,0 +1,2 @@
+class ConfigPermErr:
+    pass

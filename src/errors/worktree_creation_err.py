@@ -1,0 +1,2 @@
+class WorktreeCreationErr:
+    pass

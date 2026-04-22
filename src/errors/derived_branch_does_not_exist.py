@@ -1,0 +1,2 @@
+class DeriveBranchDoesNotExist:
+    pass

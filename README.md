@@ -12,13 +12,18 @@
 
 ## Installation
 
-To install `git-wt`, clone the repository and build it using Cargo:
+To install `git-wt`, clone the repository and install with pip:
 
 ```bash
 git clone https://github.com/0x56696B/git-wt.git
 cd git-wt
-cargo build --release
-cargo install --path .
+pip install .
+```
+
+For development:
+
+```bash
+pip install -e ".[dev]"
 ```
 
 ## Usage

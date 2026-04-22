@@ -1,0 +1,2 @@
+class ConfigWriteErr:
+    pass
