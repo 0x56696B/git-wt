@@ -1,15 +1,12 @@
 import logging
 
-from result import Result, Ok, Err
-
-
-from .args_config import ConfigArgs
-from .result_config import ConfigError
+from result import Err, Ok, Result
 
 from ...errors.not_bare_repo_err import NotBareRepoErr
-
-from ...helpers.config_file import ensure_config_exists, read_config, write_config_file, set_list_value, get_list_value
+from ...helpers.config_file import ensure_config_exists, get_list_value, read_config, set_list_value, write_config_file
 from ...helpers.find_git import get_git_dir
+from .args_config import ConfigArgs
+from .result_config import ConfigError
 
 
 def configure(config_args: ConfigArgs) -> Result[None, ConfigError]:

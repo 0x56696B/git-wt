@@ -1,12 +1,12 @@
 import os
-
 from logging import basicConfig
+
 import click
 from rich.console import Console
 from rich.logging import RichHandler
 
+console = Console(stderr=True)  # Shared
 
-console = Console(stderr=True) # Shared
 
 def setup_logging() -> None:
     level = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -27,5 +27,5 @@ def setup_logging() -> None:
                 tracebacks_show_locals=True,
                 tracebacks_suppress=[click],
             )
-        ]
+        ],
     )

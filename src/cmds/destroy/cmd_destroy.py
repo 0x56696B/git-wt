@@ -1,18 +1,16 @@
 import logging
 import shutil
-import pygit2 as pg
-
 from pathlib import Path
-from result import Result, Ok, Err
 
-from .args_destroy import DestroyArgs
-from .result_destroy import DestroyRepoError
+import pygit2 as pg
+from result import Err, Ok, Result
 
 from ...errors.destroy_err import DestroyErr
 from ...errors.directory_not_found_err import DirectoryNotFoundErr
 from ...errors.not_bare_repo_err import NotBareRepoErr
-
 from ...helpers.config_file import remove_repo_entry
+from .args_destroy import DestroyArgs
+from .result_destroy import DestroyRepoError
 
 
 def destroy_repo(destroy_args: DestroyArgs) -> Result[None, DestroyRepoError]:

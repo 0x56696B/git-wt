@@ -1,21 +1,18 @@
 import logging
 import shutil
-import pygit2 as pg
-
 from pathlib import Path
-from result import Result, Ok, Err
 
-
-from .args_rm import RmArgs
-from .result_rm import RemoveWorktreeError
+import pygit2 as pg
+from result import Err, Ok, Result
 
 from ...errors.not_bare_repo_err import NotBareRepoErr
 from ...errors.unmerged_changes_err import UnmergedChangesErr
 from ...errors.worktree_not_found_err import WorktreeNotFoundErr
 from ...errors.worktree_remove_err import WorktreeRemoveErr
-
 from ...helpers.config_file import ensure_config_exists, read_config, remove_repo_entry
 from ...helpers.find_git import get_git_dir
+from .args_rm import RmArgs
+from .result_rm import RemoveWorktreeError
 
 
 def remove_worktree(rm_args: RmArgs) -> Result[None, RemoveWorktreeError]:
@@ -71,7 +68,7 @@ def _remove_single(
 
     try:
         worktree: pg.Worktree = bare_repo.lookup_worktree(branch_name)
-    except (KeyError, pg.GitError ):
+    except (KeyError, pg.GitError):
         log.warning("Worktree not found; branch_name=%s", branch_name)
         return Err(WorktreeNotFoundErr())
 
@@ -84,10 +81,7 @@ def _remove_single(
     if not force:
         unmerged = _has_unmerged_commits(bare_repo, git_dir, branch_name)
         if unmerged:
-            log.error(
-                "Branch has commits not in default branch, refusing removal; branch=%s. Use --force to override.",
-                branch_name
-            )
+            log.error("Branch has commits not in default branch, refusing removal; branch=%s. Use --force to override.", branch_name)
             return Err(UnmergedChangesErr())
 
     log.debug("Removing worktree directory; path=%s", wt_path)

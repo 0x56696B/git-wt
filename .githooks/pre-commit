@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Check if ruff is available
+if ! command -v ruff &> /dev/null; then
+    echo "ruff not found. Install with: pip install -e '.[dev]'"
+    exit 1
+fi
+
+# Get staged Python files
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
+
+if [ -z "$STAGED_PY" ]; then
+    exit 0
+fi
+
+echo "Running ruff format check..."
+if ! ruff format --check $STAGED_PY; then
+    echo ""
+    echo "Format check failed. Run: ruff format src/"
+    exit 1
+fi
+
+echo "Running ruff lint..."
+if ! ruff check $STAGED_PY; then
+    echo ""
+    echo "Lint check failed. Run: ruff check --fix src/"
+    exit 1
+fi
+
+echo "All checks passed."

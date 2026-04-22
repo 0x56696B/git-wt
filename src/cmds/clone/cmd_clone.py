@@ -1,15 +1,14 @@
 import logging
 import os
-import pygit2 as pg
-
 from pathlib import Path
+
+import pygit2 as pg
 from result import Err, Ok, Result
 
-from ...errors.path_cannot_be_file import PathCannotBeFile
 from ...errors.directory_not_empty import DirectoryNotEmpty
+from ...errors.path_cannot_be_file import PathCannotBeFile
 from ...errors.worktree_creation_err import WorktreeCreationErr
 from ...helpers.auth_agent_callback import AuthAgentCallback
-
 from .args_clone import CloneArgs
 from .result_clone import CloneRepositoryErr
 
@@ -31,11 +30,7 @@ def clone_repository(clone_args: CloneArgs) -> Result[pg.Repository, CloneReposi
     repo: pg.Repository | None = None
     try:
         repo = pg.clone_repository(
-            url=clone_args.repository_link,
-            path=str(clone_args.dest.absolute()),
-            bare=True,
-            proxy=True,
-            callbacks=AuthAgentCallback()
+            url=clone_args.repository_link, path=str(clone_args.dest.absolute()), bare=True, proxy=True, callbacks=AuthAgentCallback()
         )
 
     except pg.GitError as e:

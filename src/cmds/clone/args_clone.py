@@ -6,4 +6,3 @@ from pathlib import Path
 class CloneArgs:
     repository_link: str
     dest: Path
-

@@ -1,14 +1,13 @@
 import configparser
 import logging
 import os
-
 from pathlib import Path
+
 from result import Err, Ok, Result
 
+from ..errors.config_perm_err import ConfigPermErr
 from ..errors.config_read_err import ConfigReadErr
 from ..errors.config_write_err import ConfigWriteErr
-from ..errors.config_perm_err import ConfigPermErr
-
 
 CONFIG_PATH = Path.home() / ".gitconfig_wt"
 
@@ -75,7 +74,7 @@ def write_config_file(config: configparser.RawConfigParser, path: Path) -> Resul
     log = logging.getLogger(__name__)
 
     try:
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             for section in config.sections():
                 _ = f.write(f"[{section}]\n")
 
@@ -146,8 +145,8 @@ def ensure_repo_entry(repo_path: Path) -> Result[None, ConfigReadErr | ConfigWri
         case Ok(config):
             pass
 
-    if not config.has_section(str( repo_path.absolute() )):
-        config.add_section(str( repo_path.absolute() ))
+    if not config.has_section(str(repo_path.absolute())):
+        config.add_section(str(repo_path.absolute()))
         return write_config_file(config, config_path)
 
     return Ok(None)

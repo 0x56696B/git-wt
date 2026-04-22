@@ -1,39 +1,48 @@
-from fnmatch import fnmatch
 import logging
 import os
-import pygit2 as pg
-
-from result import Result, Ok, Err
-from shutil import copy2, copytree
+from fnmatch import fnmatch
 from pathlib import Path
+from shutil import copy2, copytree
 
+import pygit2 as pg
+from result import Err, Ok, Result
+
+from ...errors.derived_branch_does_not_exist import DeriveBranchDoesNotExist
+from ...errors.no_fast_forward_merge import NoFastForwardMerge
+from ...errors.not_bare_repo_err import NotBareRepoErr
+from ...errors.worktree_already_exists import WorktreeAlreadyExistsErr
+from ...errors.worktree_creation_err import WorktreeCreationErr
+from ...helpers.find_git import get_git_dir
 from .args_add import AddArgs
 from .result_add import AddWorktreeError
-
-from ...errors.no_fast_forward_merge import NoFastForwardMerge
-from ...errors.worktree_already_exists import WorktreeAlreadyExistsErr
-from ...errors.derived_branch_does_not_exist import DeriveBranchDoesNotExist
-from ...helpers.find_git import get_git_dir
-from ...errors.not_bare_repo_err import NotBareRepoErr
-from ...errors.worktree_creation_err import WorktreeCreationErr
 
 
 def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
     log = logging.getLogger(__name__)
 
-    branch_name: str = add_args.new_branch_name if add_args.should_nest_dirs else add_args.new_branch_name.replace('/', '-')
+    branch_name: str = add_args.new_branch_name if add_args.should_nest_dirs else add_args.new_branch_name.replace("/", "-")
     current_path: str = os.getcwd()
 
-    log.debug("Attempting to find git dir; should_nest_dirs=%s, branch_path=%s, current_path=%s", add_args.should_nest_dirs, branch_name, current_path)
+    log.debug(
+        "Attempting to find git dir; should_nest_dirs=%s, branch_path=%s, current_path=%s",
+        add_args.should_nest_dirs,
+        branch_name,
+        current_path,
+    )
 
     git_dir = get_git_dir(current_path)
     if not git_dir:
-        log.warning("This isn't a bare git repository; should_nest_dirs=%s, branch_path=%s, current_path=%s", add_args.should_nest_dirs, branch_name, current_path)
+        log.warning(
+            "This isn't a bare git repository; should_nest_dirs=%s, branch_path=%s, current_path=%s",
+            add_args.should_nest_dirs,
+            branch_name,
+            current_path,
+        )
         return Err(NotBareRepoErr())
 
     derived_branch_exists: Path = Path(git_dir, add_args.derive_from_branch)
     if not derived_branch_exists.exists(follow_symlinks=True):
-        log.warning("Derived branch does not exist; derived_branch_path=%s", str( derived_branch_exists.absolute ))
+        log.warning("Derived branch does not exist; derived_branch_path=%s", str(derived_branch_exists.absolute))
         return Err(DeriveBranchDoesNotExist())
 
     # TODO: Specify the repo to be based on the derived_branch
@@ -44,7 +53,12 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
 
     # Technically shouldn't be hittable, as get_git_dir checks for that
     if not bare_repo.is_bare:
-        log.warning("This isn't a bare git repository; should_nest_dirs=%s, branch_path=%s, current_path=%s", add_args.should_nest_dirs, branch_name, current_path)
+        log.warning(
+            "This isn't a bare git repository; should_nest_dirs=%s, branch_path=%s, current_path=%s",
+            add_args.should_nest_dirs,
+            branch_name,
+            current_path,
+        )
         return Err(NotBareRepoErr())
 
     # TODO: Check if this fetches main branch, if configured
@@ -74,7 +88,6 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
         # True merge required — pygit2 can do it but you'd need to handle conflicts
         return Err(NoFastForwardMerge())
 
-
     new_worktree: pg.Worktree | None = None
     wt_path = Path(git_dir, branch_name).absolute()
 
@@ -91,24 +104,28 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
         return Err(WorktreeCreationErr())
 
     except pg.AlreadyExistsError:
-        log.error("Worktree with the same name already exists; worktree_path=%s, worktree_name=%s, repository=%s", wt_path, branch_name, bare_repo)
+        log.error(
+            "Worktree with the same name already exists; worktree_path=%s, worktree_name=%s, repository=%s", wt_path, branch_name, bare_repo
+        )
 
         return Err(WorktreeAlreadyExistsErr())
-
 
     assert new_worktree is not None, "The new worktree must be created. Something wasn not handled correctly"
     assert new_worktree.name == branch_name, "Worktree name must equal to the branch name provided"
     assert new_worktree.path == str(wt_path), "The path of the worktree must be the same as the given path for worktree creation"
 
-
     derive_branch_path: Path = Path(git_dir, add_args.derive_from_branch)
-    log.info("Preparing for file copying; copy_from=%s, copy_to=%s", str( derive_branch_path ), new_worktree.path)
+    log.info("Preparing for file copying; copy_from=%s, copy_to=%s", str(derive_branch_path), new_worktree.path)
 
     derived_repo = pg.Repository(derive_branch_path)
     log.debug("Derived repository opened; derived_repository=%s; derived_repo_workdir=%s", derived_repo, derived_repo.workdir)
 
     git_ignored_files = [Path(derived_repo.workdir, ignored) for ignored in derived_repo.status(untracked_files="no", ignored=True)]
-    git_ignored_filtered_files = [ignored_file for ignored_file in git_ignored_files if not any(fnmatch(ignored_file.name, excluded_glob) for excluded_glob in add_args.exclude)]
+    git_ignored_filtered_files = [
+        ignored_file
+        for ignored_file in git_ignored_files
+        if not any(fnmatch(ignored_file.name, excluded_glob) for excluded_glob in add_args.exclude)
+    ]
 
     log.debug("Found git ignored files from derived branch; git_ignored_files=%s", git_ignored_filtered_files)
 
