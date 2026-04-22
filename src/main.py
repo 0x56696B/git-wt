@@ -90,7 +90,7 @@ def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], fo
             exit(ExitCode.ERR_NOT_BARE_REPO)
 
         case Err(WorktreeCreationErr()):
-            log.error("An error occured while trying to create the new branch. Please, try again.")
+            log.error("An error occurred while trying to create the new branch. Please, try again.")
             exit(ExitCode.ERR_WORKTREE)
 
         case Err(DeriveBranchDoesNotExist()):
@@ -98,7 +98,7 @@ def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], fo
             exit(ExitCode.ERR_BRANCH_MISSING)
 
         case Err(NoFastForwardMerge()):
-            log.error("The derived branch has conflitcs and cannot fast-forward changes from origin.")
+            log.error("The derived branch has conflicts and cannot fast-forward changes from origin.")
             exit(ExitCode.ERR_NO_FF_MERGE)
 
         case Err(_):
@@ -244,7 +244,7 @@ def clone(repository: str, directory: str):
             exit(ExitCode.ERR_PATH_IS_FILE)
 
         case Err(DirectoryNotEmpty()):
-            log.error("Direcotry is not empty. Cloning in it may overwrite files")
+            log.error("Directory is not empty. Cloning in it may overwrite files")
             exit(ExitCode.ERR_DIR_NOT_EMPTY)
 
         case Err(WorktreeCreationErr()):
@@ -256,7 +256,7 @@ def clone(repository: str, directory: str):
             exit(ExitCode.ERR_GENERAL)
 
         case Ok(repo):
-            log.info("Repository clonned successfully; repo_workdir=%s, repo_path=%s", repo.workdir, repo.path)
+            log.info("Repository cloned successfully; repo_workdir=%s, repo_path=%s", repo.workdir, repo.path)
             exit(ExitCode.SUCCESS)
 
 

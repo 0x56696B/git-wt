@@ -83,7 +83,7 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
     try:
         new_worktree = bare_repo.add_worktree(branch_name, wt_path)
 
-        log.info("Successully created a worktree; worktree_name=%s, branch_name=%s", new_worktree.name, branch_name)
+        log.info("Successfully created a worktree; worktree_name=%s, branch_name=%s", new_worktree.name, branch_name)
 
     except OSError:
         log.error("Worktree opening failed; worktree_path=%s, worktree_name=%s, repository=%s", wt_path, branch_name, bare_repo)
@@ -102,7 +102,7 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
 
 
     derive_branch_path: Path = Path(git_dir, add_args.derive_from_branch)
-    log.info("Preparing for file coping; copy_from=%s, copy_to=%s", str( derive_branch_path ), new_worktree.path)
+    log.info("Preparing for file copying; copy_from=%s, copy_to=%s", str( derive_branch_path ), new_worktree.path)
 
     derived_repo = pg.Repository(derive_branch_path)
     log.debug("Derived repository opened; derived_repository=%s; derived_repo_workdir=%s", derived_repo, derived_repo.workdir)
@@ -128,6 +128,6 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
             log.info("Copied ignored file; file=%s", cp_res)
 
     except OSError as os_err:
-        log.error("A copy error occured; err=%s", os_err)
+        log.error("A copy error occurred; err=%s", os_err)
 
     return Ok(None)

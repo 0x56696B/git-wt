@@ -39,7 +39,7 @@ def clone_repository(clone_args: CloneArgs) -> Result[pg.Repository, CloneReposi
         )
 
     except pg.GitError as e:
-        log.fatal("An error occured; error=%s", e)
+        log.fatal("An error occurred; error=%s", e)
         return Err(DirectoryNotEmpty())
 
     assert Path(repo.path).absolute() == clone_args.dest.absolute(), "A BARE repository must be created at the designated path"
