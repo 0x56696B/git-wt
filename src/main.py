@@ -13,6 +13,8 @@ from .cmds.config.args_config import ConfigArgs
 from .cmds.config.cmd_config import configure
 from .cmds.destroy.args_destroy import DestroyArgs
 from .cmds.destroy.cmd_destroy import destroy_repo
+from .cmds.pull.args_pull import PullArgs
+from .cmds.pull.cmd_pull import pull_worktree
 from .cmds.rm.args_rm import RmArgs
 from .cmds.rm.cmd_rm import remove_worktree
 from .errors.config_perm_err import ConfigPermErr
@@ -22,10 +24,13 @@ from .errors.derived_branch_does_not_exist import DeriveBranchDoesNotExist
 from .errors.destroy_err import DestroyErr
 from .errors.directory_not_empty import DirectoryNotEmpty
 from .errors.directory_not_found_err import DirectoryNotFoundErr
+from .errors.fetch_err import FetchErr
 from .errors.no_fast_forward_merge import NoFastForwardMerge
 from .errors.not_bare_repo_err import NotBareRepoErr
 from .errors.path_cannot_be_file import PathCannotBeFile
+from .errors.remote_branch_not_found_err import RemoteBranchNotFoundErr
 from .errors.unmerged_changes_err import UnmergedChangesErr
+from .errors.worktree_already_exists import WorktreeAlreadyExistsErr
 from .errors.worktree_creation_err import WorktreeCreationErr
 from .errors.worktree_not_found_err import WorktreeNotFoundErr
 from .errors.worktree_remove_err import WorktreeRemoveErr
@@ -400,6 +405,55 @@ def destroy(directory: str, force: bool):
 
         case Ok(None):
             log.info("Bare repository destroyed successfully; directory=%s", directory)
+            exit(ExitCode.SUCCESS)
+
+
+@cli.command()
+@click.argument("BRANCH_NAME", type=str)
+def pull(branch_name: str):
+    """
+    Pull a branch from origin and create a worktree for it.
+
+    Fetches BRANCH_NAME from origin, then creates a new worktree at
+    <bare_repo>/<sanitized_branch_name>. Slashes(`/`) in the branch name
+    will be replaced with dash(`-`) to avoid directory nesting.
+    """
+
+    log = logging.getLogger(__name__)
+
+    pull_args: PullArgs = PullArgs(branch_name=branch_name, current_working_dir=os.getcwd())
+
+    pull_res = pull_worktree(pull_args)
+
+    log.debug("Worktree pull result; result=%s", pull_res)
+
+    match pull_res:
+        case Err(NotBareRepoErr()):
+            log.error("Cannot find a BARE git repository in the current working directory.")
+            exit(ExitCode.ERR_NOT_BARE_REPO)
+
+        case Err(WorktreeCreationErr()):
+            log.error("An error occurred while trying to create the new worktree. Please, try again.")
+            exit(ExitCode.ERR_WORKTREE)
+
+        case Err(WorktreeAlreadyExistsErr()):
+            log.error("A worktree for this branch already exists locally.")
+            exit(ExitCode.ERR_WORKTREE)
+
+        case Err(RemoteBranchNotFoundErr()):
+            log.error("The branch does not exist on the remote repository.")
+            exit(ExitCode.ERR_REMOTE_BRANCH_NOT_FOUND)
+
+        case Err(FetchErr()):
+            log.error("Failed to fetch the branch from the remote repository.")
+            exit(ExitCode.ERR_FETCH)
+
+        case Err(_):
+            log.fatal("Something has gone horribly wrong. Aborting immediately!")
+            exit(ExitCode.ERR_GENERAL)
+
+        case Ok(None):
+            log.info("Successfully pulled branch and created worktree; branch_name=%s", branch_name)
             exit(ExitCode.SUCCESS)
 
 
