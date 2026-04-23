@@ -20,6 +20,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-cov",
+    "ruff>=0.8",
 ]
 
 [project.scripts]
@@ -32,5 +33,23 @@ packages = ["src"]
 testpaths = ["tests"]
 pythonpath = ["."]
 
-# [tool.mypy]
-# plugins = ["returns.contrib.mypy.returns_plugin"]
+[tool.ruff]
+target-version = "py311"
+line-length = 140
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (handled by formatter with line-length above)
+]
+
+[tool.ruff.format]
+quote-style = "double"
