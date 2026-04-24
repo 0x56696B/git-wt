@@ -22,3 +22,5 @@ class ExitCode(IntEnum):
     ERR_UNMERGED = 175  # Branch has commits not present in default branch
     ERR_WORKTREE_MISSING = 176  # Worktree or branch not found
     ERR_DIR_NOT_FOUND = 177  # Directory does not exist
+    ERR_REMOTE_BRANCH_NOT_FOUND = 178  # Remote branch does not exist
+    ERR_FETCH = 179  # Failed to fetch from remote
