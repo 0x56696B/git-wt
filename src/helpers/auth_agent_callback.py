@@ -1,5 +1,13 @@
 import logging
-from typing import final, override
+from typing import final
+
+try:
+    from typing import override
+except ImportError:  # Python < 3.12
+
+    def override(f):  # type: ignore[misc]
+        return f
+
 
 from pygit2 import CredentialType, KeypairFromAgent, RemoteCallbacks
 from pygit2.remotes import TransferProgress
