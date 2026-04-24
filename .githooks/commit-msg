@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Validate conventional commit format
+# Pattern: type(scope): message  OR  type: message
+COMMIT_MSG=$(head -1 "$1")
+PATTERN="^(feat|fix|chore|docs|style|refactor|perf|test|ci|build|revert)(\(.+\))?: .{1,72}$"
+
+if ! echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+    echo ""
+    echo "Invalid commit message format."
+    echo "Expected: <type>(<scope>): <description>"
+    echo ""
+    echo "Types: feat, fix, chore, docs, style, refactor, perf, test, ci, build, revert"
+    echo "Max subject length: 72 chars"
+    echo ""
+    echo "Got: $COMMIT_MSG"
+    exit 1
+fi
