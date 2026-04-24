@@ -69,17 +69,13 @@ def set_list_value(
     config.set(section, key, "\n" + "\n".join(values))
 
 
-def get_list_value(
-    config: configparser.RawConfigParser, section: str, key: str
-) -> list[str]:
+def get_list_value(config: configparser.RawConfigParser, section: str, key: str) -> list[str]:
     raw = config.get(section, key, fallback="")
 
     return [line.strip() for line in raw.splitlines() if line.strip()]
 
 
-def write_config_file(
-    config: configparser.RawConfigParser, path: Path
-) -> Result[None, ConfigWriteErr]:
+def write_config_file(config: configparser.RawConfigParser, path: Path) -> Result[None, ConfigWriteErr]:
     log = logging.getLogger(__name__)
 
     try:

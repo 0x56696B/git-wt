@@ -2,29 +2,25 @@ import logging
 import os
 from fnmatch import fnmatch
 from pathlib import Path
+from shutil import copy2, copytree
 
 import pygit2 as pg
 from result import Err, Ok, Result
-from shutil import copy2, copytree
 
-from .args_add import AddArgs
-from .result_add import AddWorktreeError
 from ...errors.derived_branch_does_not_exist import DeriveBranchDoesNotExist
 from ...errors.no_fast_forward_merge import NoFastForwardMerge
 from ...errors.not_bare_repo_err import NotBareRepoErr
 from ...errors.worktree_already_exists import WorktreeAlreadyExistsErr
 from ...errors.worktree_creation_err import WorktreeCreationErr
 from ...helpers.find_git import get_git_dir
+from .args_add import AddArgs
+from .result_add import AddWorktreeError
 
 
 def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
     log = logging.getLogger(__name__)
 
-    branch_name: str = (
-        add_args.new_branch_name
-        if add_args.should_nest_dirs
-        else add_args.new_branch_name.replace("/", "-")
-    )
+    branch_name: str = add_args.new_branch_name if add_args.should_nest_dirs else add_args.new_branch_name.replace("/", "-")
     current_path: str = os.getcwd()
 
     log.debug(
@@ -54,9 +50,7 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
 
     # TODO: Specify the repo to be based on the derived_branch
     log.info("Git repository found; git_dir=%s", git_dir)
-    bare_repo: pg.Repository = pg.Repository(
-        git_dir, flags=pg.enums.RepositoryOpenFlag.BARE
-    )
+    bare_repo: pg.Repository = pg.Repository(git_dir, flags=pg.enums.RepositoryOpenFlag.BARE)
 
     log.debug("Repository opened; repository=%s", bare_repo)
 
@@ -76,9 +70,7 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
     #
     # log.info("Fetched commits from origin; num_fetched_commits=%s", transfer_progress.total_deltas)
 
-    remote_branch = bare_repo.lookup_reference(
-        f"refs/heads/{add_args.derive_from_branch}"
-    ).peel(pg.Commit)
+    remote_branch = bare_repo.lookup_reference(f"refs/heads/{add_args.derive_from_branch}").peel(pg.Commit)
     analysis, _ = bare_repo.merge_analysis(remote_branch.id)
 
     log.debug(
@@ -97,9 +89,7 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
         # NOTE: Untested!
         # Move HEAD and working tree forward
         _ = bare_repo.checkout_tree(treeish=bare_repo.get(remote_branch.id))  # pyright: ignore[reportUnknownMemberType]
-        bare_repo.lookup_reference(
-            f"refs/heads/{add_args.derive_from_branch}"
-        ).set_target(remote_branch.id)
+        bare_repo.lookup_reference(f"refs/heads/{add_args.derive_from_branch}").set_target(remote_branch.id)
         bare_repo.head.set_target(remote_branch.id)
 
         log.info("Fast-forwarded ref branch; fast_forwarded=%s", remote_branch.id)
@@ -147,15 +137,9 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
 
         return Err(WorktreeAlreadyExistsErr())
 
-    assert new_worktree is not None, (
-        "The new worktree must be created. Something wasn not handled correctly"
-    )
-    assert new_worktree.name == branch_name, (
-        "Worktree name must equal to the branch name provided"
-    )
-    assert new_worktree.path == str(wt_path), (
-        "The path of the worktree must be the same as the given path for worktree creation"
-    )
+    assert new_worktree is not None, "The new worktree must be created. Something wasn not handled correctly"
+    assert new_worktree.name == branch_name, "Worktree name must equal to the branch name provided"
+    assert new_worktree.path == str(wt_path), "The path of the worktree must be the same as the given path for worktree creation"
 
     derive_branch_path: Path = Path(git_dir, add_args.derive_from_branch)
     log.info(
@@ -171,17 +155,11 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
         derived_repo.workdir,
     )
 
-    git_ignored_files = [
-        Path(derived_repo.workdir, ignored)
-        for ignored in derived_repo.status(untracked_files="no", ignored=True)
-    ]
+    git_ignored_files = [Path(derived_repo.workdir, ignored) for ignored in derived_repo.status(untracked_files="no", ignored=True)]
     git_ignored_filtered_files = [
         ignored_file
         for ignored_file in git_ignored_files
-        if not any(
-            fnmatch(ignored_file.name, excluded_glob)
-            for excluded_glob in add_args.exclude
-        )
+        if not any(fnmatch(ignored_file.name, excluded_glob) for excluded_glob in add_args.exclude)
     ]
 
     log.debug(
@@ -197,14 +175,10 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
                 cp_res = copy2(str(path), new_worktree.path, follow_symlinks=True)
 
             elif path.is_dir():
-                cp_res = copytree(
-                    str(path), new_worktree.path, symlinks=True, dirs_exist_ok=True
-                )
+                cp_res = copytree(str(path), new_worktree.path, symlinks=True, dirs_exist_ok=True)
 
             else:
-                log.debug(
-                    "Neither a dir, nor a file, that should be copied; file=%s", path
-                )
+                log.debug("Neither a dir, nor a file, that should be copied; file=%s", path)
 
             log.info("Copied ignored file; file=%s", cp_res)
 

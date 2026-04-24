@@ -5,12 +5,12 @@ from pathlib import Path
 import pygit2 as pg
 from result import Err, Ok, Result
 
-from .args_destroy import DestroyArgs
-from .result_destroy import DestroyRepoError
 from ...errors.destroy_err import DestroyErr
 from ...errors.directory_not_found_err import DirectoryNotFoundErr
 from ...errors.not_bare_repo_err import NotBareRepoErr
 from ...helpers.config_file import remove_repo_entry
+from .args_destroy import DestroyArgs
+from .result_destroy import DestroyRepoError
 
 
 def destroy_repo(destroy_args: DestroyArgs) -> Result[None, DestroyRepoError]:
@@ -29,9 +29,7 @@ def destroy_repo(destroy_args: DestroyArgs) -> Result[None, DestroyRepoError]:
         return Err(DirectoryNotFoundErr())
 
     try:
-        bare_repo: pg.Repository = pg.Repository(
-            str(directory), flags=pg.enums.RepositoryOpenFlag.BARE
-        )
+        bare_repo: pg.Repository = pg.Repository(str(directory), flags=pg.enums.RepositoryOpenFlag.BARE)
     except pg.GitError:
         log.warning("Not a valid bare git repository; directory=%s", directory)
         return Err(NotBareRepoErr())

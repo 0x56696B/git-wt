@@ -24,9 +24,7 @@ class AuthAgentCallback(RemoteCallbacks):
         _ = self._progress.__enter__()
 
     @override
-    def credentials(
-        self, url: str, username_from_url: str | None, allowed_types: CredentialType
-    ):
+    def credentials(self, url: str, username_from_url: str | None, allowed_types: CredentialType):
         if allowed_types & CredentialType.SSH_KEY:
             return KeypairFromAgent(username_from_url or "git")
 
@@ -56,6 +54,4 @@ class AuthAgentCallback(RemoteCallbacks):
                 completed=stats.indexed_objects,
             )
 
-        self._progress.update(
-            self._task, description=None, completed=stats.indexed_objects, refresh=True
-        )
+        self._progress.update(self._task, description=None, completed=stats.indexed_objects, refresh=True)
