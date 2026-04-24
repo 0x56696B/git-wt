@@ -1,14 +1,13 @@
 import configparser
 import logging
 import os
-
 from pathlib import Path
+
 from result import Err, Ok, Result
 
+from ..errors.config_perm_err import ConfigPermErr
 from ..errors.config_read_err import ConfigReadErr
 from ..errors.config_write_err import ConfigWriteErr
-from ..errors.config_perm_err import ConfigPermErr
-
 
 CONFIG_PATH = Path.home() / ".gitconfig_wt"
 
@@ -58,24 +57,33 @@ def read_config(path: Path) -> Result[configparser.RawConfigParser, ConfigReadEr
         return Err(ConfigReadErr())
 
 
-def set_list_value(config: configparser.RawConfigParser, section: str, key: str, values: tuple[str, ...]) -> None:
+def set_list_value(
+    config: configparser.RawConfigParser,
+    section: str,
+    key: str,
+    values: tuple[str, ...],
+) -> None:
     if not values:
         return
 
     config.set(section, key, "\n" + "\n".join(values))
 
 
-def get_list_value(config: configparser.RawConfigParser, section: str, key: str) -> list[str]:
+def get_list_value(
+    config: configparser.RawConfigParser, section: str, key: str
+) -> list[str]:
     raw = config.get(section, key, fallback="")
 
     return [line.strip() for line in raw.splitlines() if line.strip()]
 
 
-def write_config_file(config: configparser.RawConfigParser, path: Path) -> Result[None, ConfigWriteErr]:
+def write_config_file(
+    config: configparser.RawConfigParser, path: Path
+) -> Result[None, ConfigWriteErr]:
     log = logging.getLogger(__name__)
 
     try:
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             for section in config.sections():
                 _ = f.write(f"[{section}]\n")
 
@@ -100,7 +108,9 @@ def write_config_file(config: configparser.RawConfigParser, path: Path) -> Resul
         return Err(ConfigWriteErr())
 
 
-def remove_repo_entry(repo_path: str) -> Result[None, ConfigReadErr | ConfigWriteErr | ConfigPermErr]:
+def remove_repo_entry(
+    repo_path: str,
+) -> Result[None, ConfigReadErr | ConfigWriteErr | ConfigPermErr]:
     log = logging.getLogger(__name__)
 
     ensure_res = ensure_config_exists()
@@ -129,7 +139,9 @@ def remove_repo_entry(repo_path: str) -> Result[None, ConfigReadErr | ConfigWrit
     return Ok(None)
 
 
-def ensure_repo_entry(repo_path: Path) -> Result[None, ConfigReadErr | ConfigWriteErr | ConfigPermErr]:
+def ensure_repo_entry(
+    repo_path: Path,
+) -> Result[None, ConfigReadErr | ConfigWriteErr | ConfigPermErr]:
     """Ensure a section exists in the config for repo_path. Called after clone."""
     ensure_res = ensure_config_exists()
     match ensure_res:
@@ -146,8 +158,8 @@ def ensure_repo_entry(repo_path: Path) -> Result[None, ConfigReadErr | ConfigWri
         case Ok(config):
             pass
 
-    if not config.has_section(str( repo_path.absolute() )):
-        config.add_section(str( repo_path.absolute() ))
+    if not config.has_section(str(repo_path.absolute())):
+        config.add_section(str(repo_path.absolute()))
         return write_config_file(config, config_path)
 
     return Ok(None)
