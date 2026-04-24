@@ -5,14 +5,14 @@ from pathlib import Path
 import pygit2 as pg
 from result import Err, Ok, Result
 
-from .args_rm import RmArgs
-from .result_rm import RemoveWorktreeError
 from ...errors.not_bare_repo_err import NotBareRepoErr
 from ...errors.unmerged_changes_err import UnmergedChangesErr
 from ...errors.worktree_not_found_err import WorktreeNotFoundErr
 from ...errors.worktree_remove_err import WorktreeRemoveErr
 from ...helpers.config_file import ensure_config_exists, read_config, remove_repo_entry
 from ...helpers.find_git import get_git_dir
+from .args_rm import RmArgs
+from .result_rm import RemoveWorktreeError
 
 
 def remove_worktree(rm_args: RmArgs) -> Result[None, RemoveWorktreeError]:
@@ -32,9 +32,7 @@ def remove_worktree(rm_args: RmArgs) -> Result[None, RemoveWorktreeError]:
         )
         return Err(NotBareRepoErr())
 
-    bare_repo: pg.Repository = pg.Repository(
-        git_dir, flags=pg.enums.RepositoryOpenFlag.BARE
-    )
+    bare_repo: pg.Repository = pg.Repository(git_dir, flags=pg.enums.RepositoryOpenFlag.BARE)
     cwd: Path = Path(rm_args.current_working_dir).absolute()
 
     for branch_name in rm_args.branch_names:
@@ -43,9 +41,7 @@ def remove_worktree(rm_args: RmArgs) -> Result[None, RemoveWorktreeError]:
             case Err(_) as err:
                 return err
             case Ok(_):
-                log.info(
-                    "Successfully removed worktree; worktree_branch=%s", branch_name
-                )
+                log.info("Successfully removed worktree; worktree_branch=%s", branch_name)
                 pass
 
     remaining = bare_repo.list_worktrees()
@@ -86,9 +82,7 @@ def _remove_single(
     wt_path: Path = Path(worktree.path).absolute()
 
     if str(cwd).startswith(str(wt_path)):
-        log.error(
-            "Cannot remove the worktree you are currently in; worktree_path=%s", wt_path
-        )
+        log.error("Cannot remove the worktree you are currently in; worktree_path=%s", wt_path)
         return Err(WorktreeRemoveErr())
 
     if not force:
@@ -133,9 +127,7 @@ def _has_unmerged_commits(repo: pg.Repository, git_dir: str, branch_name: str) -
                     default_branch = "main"
 
                 case Ok(config):
-                    default_branch = config.get(
-                        git_dir, "default_branch_name", fallback="main"
-                    )
+                    default_branch = config.get(git_dir, "default_branch_name", fallback="main")
 
     log.debug(
         "Checking unmerged commits; branch=%s, default_branch=%s",
@@ -144,12 +136,8 @@ def _has_unmerged_commits(repo: pg.Repository, git_dir: str, branch_name: str) -
     )
 
     try:
-        branch_commit: pg.Commit = repo.lookup_reference(
-            f"refs/heads/{branch_name}"
-        ).peel(pg.Commit)
-        default_commit: pg.Commit = repo.lookup_reference(
-            f"refs/heads/{default_branch}"
-        ).peel(pg.Commit)
+        branch_commit: pg.Commit = repo.lookup_reference(f"refs/heads/{branch_name}").peel(pg.Commit)
+        default_commit: pg.Commit = repo.lookup_reference(f"refs/heads/{default_branch}").peel(pg.Commit)
 
         merge_base: pg.Oid = repo.merge_base(branch_commit.id, default_commit.id)
 

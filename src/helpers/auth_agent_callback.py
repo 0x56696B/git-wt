@@ -6,56 +6,38 @@ from pygit2.remotes import TransferProgress
 from rich.progress import Progress
 
 from ..errors.git_auth_error import GitAuthError
-from .logger import console
 
 
 @final
 class AuthAgentCallback(RemoteCallbacks):
     def __init__(self):
         super().__init__()
-
-        self._progress = Progress(
-            redirect_stderr=True,
-            redirect_stdout=True,
-            console=console,  # same console as RichHandler
-        )
-
-        _ = self._task = None
-        _ = self._progress.__enter__()
+        self._progress = Progress(transient=True, auto_refresh=False)
+        self._task = None
 
     @override
-    def credentials(
-        self, url: str, username_from_url: str | None, allowed_types: CredentialType
-    ):
+    def credentials(self, url, username_from_url, allowed_types):
+        log = logging.getLogger(__name__)
         if allowed_types & CredentialType.SSH_KEY:
-            return KeypairFromAgent(username_from_url or "git")
+            log.debug("Using SSH agent for credentials; url=%s, username=%s", url, username_from_url)
+            return KeypairFromAgent(username_from_url)
 
-        raise GitAuthError(f"Unsupported credential type: {allowed_types}")
+        log.error("No supported credential type available; url=%s, allowed_types=%s", url, allowed_types)
+        raise GitAuthError()
 
     @override
     def transfer_progress(self, stats: TransferProgress):
-        log = logging.getLogger(__name__)
-
         if stats.total_objects == 0:
             return
 
-        if stats.total_objects == stats.indexed_objects:
-            log.debug(
-                "Downloading finished; total_objects=%s, processed_objects=%s",
-                stats.total_objects,
-                stats.indexed_objects,
-            )
+        if not self._progress.live.is_started:
+            self._progress.start()
 
-            self._progress.__exit__(None, None, None)
+        if stats.received_objects == stats.total_objects:
+            self._progress.stop()
             return
 
         if self._task is None:
-            self._task = self._progress.add_task(
-                description="",
-                total=stats.total_objects,
-                completed=stats.indexed_objects,
-            )
+            self._task = self._progress.add_task(description="", total=stats.total_objects, completed=stats.indexed_objects)
 
-        self._progress.update(
-            self._task, description=None, completed=stats.indexed_objects, refresh=True
-        )
+        self._progress.update(self._task, description=None, completed=stats.indexed_objects, refresh=True)

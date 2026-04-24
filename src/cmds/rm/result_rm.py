@@ -7,11 +7,5 @@ from ...errors.worktree_not_found_err import WorktreeNotFoundErr
 from ...errors.worktree_remove_err import WorktreeRemoveErr
 
 RemoveWorktreeError = (
-    NotBareRepoErr
-    | WorktreeNotFoundErr
-    | WorktreeRemoveErr
-    | ConfigReadErr
-    | ConfigWriteErr
-    | ConfigPermErr
-    | UnmergedChangesErr
+    NotBareRepoErr | WorktreeNotFoundErr | WorktreeRemoveErr | ConfigReadErr | ConfigWriteErr | ConfigPermErr | UnmergedChangesErr
 )

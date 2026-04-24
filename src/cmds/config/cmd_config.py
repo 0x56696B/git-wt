@@ -2,8 +2,6 @@ import logging
 
 from result import Err, Ok, Result
 
-from .args_config import ConfigArgs
-from .result_config import ConfigError
 from ...errors.not_bare_repo_err import NotBareRepoErr
 from ...helpers.config_file import (
     ensure_config_exists,
@@ -13,6 +11,8 @@ from ...helpers.config_file import (
     write_config_file,
 )
 from ...helpers.find_git import get_git_dir
+from .args_config import ConfigArgs
+from .result_config import ConfigError
 
 
 def configure(config_args: ConfigArgs) -> Result[None, ConfigError]:
@@ -42,15 +42,9 @@ def configure(config_args: ConfigArgs) -> Result[None, ConfigError]:
 
     if config_args.list:
         if config.has_section(repo_path):
-            log.info(
-                "add_commands = %s", get_list_value(config, repo_path, "add_commands")
-            )
-            log.info(
-                "rm_commands = %s", get_list_value(config, repo_path, "rm_commands")
-            )
-            log.info(
-                "exclude_files = %s", get_list_value(config, repo_path, "exclude_files")
-            )
+            log.info("add_commands = %s", get_list_value(config, repo_path, "add_commands"))
+            log.info("rm_commands = %s", get_list_value(config, repo_path, "rm_commands"))
+            log.info("exclude_files = %s", get_list_value(config, repo_path, "exclude_files"))
             log.info(
                 "default_branch_name = %s",
                 config.get(repo_path, "default_branch_name", fallback=""),

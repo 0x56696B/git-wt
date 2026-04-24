@@ -97,27 +97,19 @@ def add(
 
     match worktree_creaton_res:
         case Err(NotBareRepoErr()):
-            log.error(
-                "Cannot find a BARE git repository in the current working directory."
-            )
+            log.error("Cannot find a BARE git repository in the current working directory.")
             exit(ExitCode.ERR_NOT_BARE_REPO)
 
         case Err(WorktreeCreationErr()):
-            log.error(
-                "An error occurred while trying to create the new branch. Please, try again."
-            )
+            log.error("An error occurred while trying to create the new branch. Please, try again.")
             exit(ExitCode.ERR_WORKTREE)
 
         case Err(DeriveBranchDoesNotExist()):
-            log.error(
-                "The derived branch does not exist. A worktree from it cannot be created."
-            )
+            log.error("The derived branch does not exist. A worktree from it cannot be created.")
             exit(ExitCode.ERR_BRANCH_MISSING)
 
         case Err(NoFastForwardMerge()):
-            log.error(
-                "The derived branch has conflicts and cannot fast-forward changes from origin."
-            )
+            log.error("The derived branch has conflicts and cannot fast-forward changes from origin.")
             exit(ExitCode.ERR_NO_FF_MERGE)
 
         case Err(_):
@@ -198,9 +190,7 @@ def config(
 
     match config_res:
         case Err(NotBareRepoErr()):
-            log.error(
-                "Cannot find a BARE git repository in the current working directory."
-            )
+            log.error("Cannot find a BARE git repository in the current working directory.")
             exit(ExitCode.ERR_NOT_BARE_REPO)
 
         case Err(ConfigReadErr()):
@@ -309,9 +299,7 @@ def rm(branch_names: tuple[str, ...], force: bool):
 
     log = logging.getLogger(__name__)
 
-    rm_args = RmArgs(
-        branch_names=branch_names, current_working_dir=os.getcwd(), force=force
-    )
+    rm_args = RmArgs(branch_names=branch_names, current_working_dir=os.getcwd(), force=force)
 
     rm_res = remove_worktree(rm_args)
 
@@ -319,9 +307,7 @@ def rm(branch_names: tuple[str, ...], force: bool):
 
     match rm_res:
         case Err(NotBareRepoErr()):
-            log.error(
-                "Cannot find a BARE git repository in the current working directory."
-            )
+            log.error("Cannot find a BARE git repository in the current working directory.")
             exit(ExitCode.ERR_NOT_BARE_REPO)
 
         case Err(WorktreeNotFoundErr()):
@@ -329,9 +315,7 @@ def rm(branch_names: tuple[str, ...], force: bool):
             exit(ExitCode.ERR_WORKTREE_MISSING)
 
         case Err(UnmergedChangesErr()):
-            log.error(
-                "Branch has commits not in the default branch. Use --force to override."
-            )
+            log.error("Branch has commits not in the default branch. Use --force to override.")
             exit(ExitCode.ERR_UNMERGED)
 
         case Err(WorktreeRemoveErr()):
@@ -349,9 +333,7 @@ def rm(branch_names: tuple[str, ...], force: bool):
 
 @cli.command()
 @click.argument("DIRECTORY", required=True, type=str)
-@click.option(
-    "--force", "-f", is_flag=True, default=False, help="Skip confirmation prompt."
-)
+@click.option("--force", "-f", is_flag=True, default=False, help="Skip confirmation prompt.")
 def destroy(directory: str, force: bool):
     """
     Destroy an entire bare-repo worktree directory.

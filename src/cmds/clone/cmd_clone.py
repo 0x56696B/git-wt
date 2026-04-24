@@ -47,9 +47,7 @@ def clone_repository(
         log.fatal("An error occurred; error=%s", e)
         return Err(DirectoryNotEmpty())
 
-    assert Path(repo.path).absolute() == clone_args.dest.absolute(), (
-        "A BARE repository must be created at the designated path"
-    )
+    assert Path(repo.path).absolute() == clone_args.dest.absolute(), "A BARE repository must be created at the designated path"
 
     default_branch = _get_default_branch(repo)
 
@@ -72,15 +70,11 @@ def _get_default_branch(repo: pg.Repository) -> str:
         return repo.head.shorthand
 
     except (pg.GitError, KeyError) as e:
-        log.warning(
-            "Could not determine default branch, falling back to 'main'; error=%s", e
-        )
+        log.warning("Could not determine default branch, falling back to 'main'; error=%s", e)
         return "main"
 
 
-def _create_default_worktree(
-    repo: pg.Repository, dest: Path, branch_name: str
-) -> Result[None, WorktreeCreationErr]:
+def _create_default_worktree(repo: pg.Repository, dest: Path, branch_name: str) -> Result[None, WorktreeCreationErr]:
     log = logging.getLogger(__name__)
 
     wt_path = dest / branch_name
@@ -95,9 +89,7 @@ def _create_default_worktree(
         ref = repo.lookup_reference(f"refs/heads/{branch_name}")
         _new_wt = repo.add_worktree(branch_name, str(wt_path), ref)
     except (pg.GitError, OSError) as e:
-        log.error(
-            "Failed to create default worktree; branch=%s, error=%s", branch_name, e
-        )
+        log.error("Failed to create default worktree; branch=%s, error=%s", branch_name, e)
         return Err(WorktreeCreationErr())
 
     log.info("Created default worktree; branch=%s, path=%s", branch_name, wt_path)

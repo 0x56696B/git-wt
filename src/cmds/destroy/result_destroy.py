@@ -5,11 +5,4 @@ from ...errors.destroy_err import DestroyErr
 from ...errors.directory_not_found_err import DirectoryNotFoundErr
 from ...errors.not_bare_repo_err import NotBareRepoErr
 
-DestroyRepoError = (
-    NotBareRepoErr
-    | DirectoryNotFoundErr
-    | DestroyErr
-    | ConfigReadErr
-    | ConfigWriteErr
-    | ConfigPermErr
-)
+DestroyRepoError = NotBareRepoErr | DirectoryNotFoundErr | DestroyErr | ConfigReadErr | ConfigWriteErr | ConfigPermErr
