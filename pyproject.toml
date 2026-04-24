@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A git-worktree extension to make using worktrees a pain of the past"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "click>=8.1",
     "pygit2==1.19.2",
@@ -34,7 +34,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 140
 
 [tool.ruff.lint]
