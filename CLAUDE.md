@@ -50,7 +50,7 @@ src/cmds/<cmd>/
 
 - Plain classes with `pass` body. No dataclass, no fields, no methods.
 - Exception: `GitAuthError(Exception)` for errors that must be raised.
-- Filename = class name in snake_case: `not_bare_repo_err.py` -> `NotBareRepoErr`
+- Filename = class name snake_case: `not_bare_repo_err.py` -> `NotBareRepoErr`
 
 ### Helpers: `src/helpers/`
 
@@ -58,7 +58,7 @@ One concern per file: `logger.py`, `auth_agent_callback.py`, `find_git.py`, `con
 
 ### main.py
 
-Only place with Click decorators, `exit()` calls, and exhaustive `match`/`case` on results.
+Only place with Click decorators, `exit()` calls, exhaustive `match`/`case` on results.
 Constructs Args dataclass -> calls command function -> matches result -> logs + exits.
 
 ## Coding Conventions
@@ -94,8 +94,8 @@ Constructs Args dataclass -> calls command function -> matches result -> logs + 
 - `| None` unions, not `Optional[T]`
 
 **Formatting:**
-- Spaces inside parentheses for multi-token expressions: `str( path.parent )` — deliberate style choice
-- `@dataclass()` with explicit parentheses even when no args
+- Spaces inside parens for multi-token expressions: `str( path.parent )` — deliberate style choice
+- `@dataclass()` with explicit parens even when no args
 - `@final` and `@override` in helper classes
 - `field(default_factory=list)` for mutable defaults
 
@@ -123,12 +123,12 @@ From README shower thoughts + current state:
 
 ## Do NOT
 
-- Add features/refactors beyond what's asked
-- Change logging style (especially: don't move `log = ...` to module level, don't use f-strings in log calls)
+- Add features/refactors beyond what asked
+- Change logging style (don't move `log = ...` to module level, don't use f-strings in log calls)
 - Add type annotations/docstrings to unchanged code
 - Create abstractions for one-off operations
 - Use `Optional[T]` instead of `| None`
-- Use exceptions where Result pattern is used
+- Use exceptions where Result pattern used
 - Put match/case logic inside command functions (belongs in main.py only)
 
 ## Do

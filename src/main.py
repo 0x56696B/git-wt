@@ -1,43 +1,37 @@
-import os
-import click
 import logging
-
+import os
 from pathlib import Path
+
+import click
 from result import Err, Ok
 
-from .errors.path_cannot_be_file import PathCannotBeFile
-from .errors.directory_not_empty import DirectoryNotEmpty
-from .errors.derived_branch_does_not_exist import DeriveBranchDoesNotExist
-from .errors.no_fast_forward_merge import NoFastForwardMerge
-from .errors.not_bare_repo_err import NotBareRepoErr
-from .errors.worktree_creation_err import WorktreeCreationErr
+from .cmds.add.args_add import AddArgs
+from .cmds.add.cmd_add import add_worktree
+from .cmds.clone.args_clone import CloneArgs
+from .cmds.clone.cmd_clone import clone_repository
+from .cmds.config.args_config import ConfigArgs
+from .cmds.config.cmd_config import configure
+from .cmds.destroy.args_destroy import DestroyArgs
+from .cmds.destroy.cmd_destroy import destroy_repo
+from .cmds.rm.args_rm import RmArgs
+from .cmds.rm.cmd_rm import remove_worktree
+from .errors.config_perm_err import ConfigPermErr
 from .errors.config_read_err import ConfigReadErr
 from .errors.config_write_err import ConfigWriteErr
-from .errors.config_perm_err import ConfigPermErr
+from .errors.derived_branch_does_not_exist import DeriveBranchDoesNotExist
+from .errors.destroy_err import DestroyErr
+from .errors.directory_not_empty import DirectoryNotEmpty
+from .errors.directory_not_found_err import DirectoryNotFoundErr
+from .errors.no_fast_forward_merge import NoFastForwardMerge
+from .errors.not_bare_repo_err import NotBareRepoErr
+from .errors.path_cannot_be_file import PathCannotBeFile
 from .errors.unmerged_changes_err import UnmergedChangesErr
+from .errors.worktree_creation_err import WorktreeCreationErr
 from .errors.worktree_not_found_err import WorktreeNotFoundErr
 from .errors.worktree_remove_err import WorktreeRemoveErr
-from .errors.directory_not_found_err import DirectoryNotFoundErr
-from .errors.destroy_err import DestroyErr
-
 from .exit_codes import ExitCode
-from .helpers.logger import setup_logging
 from .helpers.config_file import ensure_repo_entry
-
-from .cmds.add.cmd_add import add_worktree
-from .cmds.add.args_add import AddArgs
-
-from .cmds.clone.cmd_clone import clone_repository
-from .cmds.clone.args_clone import CloneArgs
-
-from .cmds.config.cmd_config import configure
-from .cmds.config.args_config import ConfigArgs
-
-from .cmds.rm.cmd_rm import remove_worktree
-from .cmds.rm.args_rm import RmArgs
-
-from .cmds.destroy.cmd_destroy import destroy_repo
-from .cmds.destroy.args_destroy import DestroyArgs
+from .helpers.logger import setup_logging
 
 
 @click.group()
@@ -50,15 +44,32 @@ def cli():
 @cli.command()
 @click.argument("NEW_BRANCH_NAME", type=str)
 @click.argument("DERIVE_FROM_BRANCH", type=str, required=False)
-@click.option("--force", "-f", is_flag=True, default=False, help="Force checkout, even if branch already exists locally")
-@click.option("--exclude", "-e", type=str, default=[], help="""
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    default=False,
+    help="Force checkout, even if branch already exists locally",
+)
+@click.option(
+    "--exclude",
+    "-e",
+    type=str,
+    default=[],
+    help="""
 Exclude files from being copied over. Provide a comma-seperated list
 
 Example: `--exclude="node_modules,dist,target,bin"`
 
 WARNING: This can override the config file
-""")
-def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], force: bool=False):
+""",
+)
+def add(
+    new_branch_name: str,
+    derive_from_branch: str,
+    exclude: list[str] | None = None,
+    force: bool = False,
+):
     """
     Create a worktree
 
@@ -71,12 +82,12 @@ def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], fo
     should_nest_dirs: bool = False
     exclude_files_from_copy: list[str] = exclude or []
 
-    add_args: AddArgs = AddArgs(
+    add_args = AddArgs(
         new_branch_name,
         derive_from_branch,
         should_nest_dirs,
         exclude_files_from_copy,
-        force
+        force,
     )
 
     worktree_creaton_res = add_worktree(add_args)
@@ -86,19 +97,27 @@ def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], fo
 
     match worktree_creaton_res:
         case Err(NotBareRepoErr()):
-            log.error("Cannot find a BARE git repository in the current working directory.")
+            log.error(
+                "Cannot find a BARE git repository in the current working directory."
+            )
             exit(ExitCode.ERR_NOT_BARE_REPO)
 
         case Err(WorktreeCreationErr()):
-            log.error("An error occurred while trying to create the new branch. Please, try again.")
+            log.error(
+                "An error occurred while trying to create the new branch. Please, try again."
+            )
             exit(ExitCode.ERR_WORKTREE)
 
         case Err(DeriveBranchDoesNotExist()):
-            log.error("The derived branch does not exist. A worktree from it cannot be created.")
+            log.error(
+                "The derived branch does not exist. A worktree from it cannot be created."
+            )
             exit(ExitCode.ERR_BRANCH_MISSING)
 
         case Err(NoFastForwardMerge()):
-            log.error("The derived branch has conflicts and cannot fast-forward changes from origin.")
+            log.error(
+                "The derived branch has conflicts and cannot fast-forward changes from origin."
+            )
             exit(ExitCode.ERR_NO_FF_MERGE)
 
         case Err(_):
@@ -116,27 +135,33 @@ def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], fo
     type=str,
     multiple=True,
     metavar="<CMD>",
-    help="Command to run after successful worktree creation. Can be repeated for multiple commands. Automatically ran after `git wt add`.")
+    help="Command to run after successful worktree creation. Can be repeated for multiple commands. Automatically ran after `git wt add`.",
+)
 @click.option(
     "--remove-command",
     type=str,
     multiple=True,
     metavar="<CMD>",
-    help="Command to run after successful worktree removal. Can be repeated for multiple commands. Automatically ran after `git wt rm`.")
+    help="Command to run after successful worktree removal. Can be repeated for multiple commands. Automatically ran after `git wt rm`.",
+)
 @click.option(
-    "--exclude", "-e",
+    "--exclude",
+    "-e",
     type=str,
     multiple=True,
     metavar="<GLOB>",
-    help="Glob pattern of files to exclude when copying after worktree creation. Can be repeated to specify multiple patterns.")
+    help="Glob pattern of files to exclude when copying after worktree creation. Can be repeated to specify multiple patterns.",
+)
 @click.option(
     "--default-branch",
     type=str,
     default="",
     metavar="<BRANCH>",
-    help="Default branch name to derive new worktrees from.")
+    help="Default branch name to derive new worktrees from.",
+)
 @click.option(
-    "--list", "-l",
+    "--list",
+    "-l",
     is_flag=True,
     default=False,
     help="""
@@ -147,17 +172,24 @@ def add(new_branch_name: str, derive_from_branch: str, exclude: list[str]=[], fo
         Example: ["node_modules", "cache"]
 
         The `git wt add` wouldn't need `--exclude "node_modules" --exclude "cache"` every time it's ran in the configured repo.
-    """)
-def config(add_command: tuple[str, ...], remove_command: tuple[str, ...], exclude: tuple[str, ...], default_branch: str, list: bool):
+    """,
+)
+def config(
+    add_command: tuple[str, ...],
+    remove_command: tuple[str, ...],
+    exclude: tuple[str, ...],
+    default_branch: str,
+    list: bool,
+):
     log = logging.getLogger(__name__)
 
-    config_args: ConfigArgs = ConfigArgs(
+    config_args = ConfigArgs(
         current_working_dir=os.getcwd(),
         add_commands=add_command,
         remove_commands=remove_command,
         copy_exclude=exclude,
         default_branch_name=default_branch,
-        list=list
+        list=list,
     )
 
     config_res = configure(config_args)
@@ -166,7 +198,9 @@ def config(add_command: tuple[str, ...], remove_command: tuple[str, ...], exclud
 
     match config_res:
         case Err(NotBareRepoErr()):
-            log.error("Cannot find a BARE git repository in the current working directory.")
+            log.error(
+                "Cannot find a BARE git repository in the current working directory."
+            )
             exit(ExitCode.ERR_NOT_BARE_REPO)
 
         case Err(ConfigReadErr()):
@@ -229,10 +263,7 @@ def clone(repository: str, directory: str):
         case Ok(_):
             pass
 
-    clone_args: CloneArgs = CloneArgs(
-        repository_link=repository,
-        dest=dest
-    )
+    clone_args = CloneArgs(repository_link=repository, dest=dest)
 
     clone_res = clone_repository(clone_args)
 
@@ -256,22 +287,30 @@ def clone(repository: str, directory: str):
             exit(ExitCode.ERR_GENERAL)
 
         case Ok(repo):
-            log.info("Repository cloned successfully; repo_workdir=%s, repo_path=%s", repo.workdir, repo.path)
+            log.info(
+                "Repository cloned successfully; repo_workdir=%s, repo_path=%s",
+                repo.workdir,
+                repo.path,
+            )
             exit(ExitCode.SUCCESS)
 
 
 @cli.command()
 @click.argument("BRANCH_NAMES", nargs=-1, required=True, type=str)
-@click.option("--force", "-f", is_flag=True, default=False, help="Remove even if the branch has commits not present in the default branch.")
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    default=False,
+    help="Remove even if the branch has commits not present in the default branch.",
+)
 def rm(branch_names: tuple[str, ...], force: bool):
     """Remove one or more worktrees."""
 
     log = logging.getLogger(__name__)
 
-    rm_args: RmArgs = RmArgs(
-        branch_names=branch_names,
-        current_working_dir=os.getcwd(),
-        force=force
+    rm_args = RmArgs(
+        branch_names=branch_names, current_working_dir=os.getcwd(), force=force
     )
 
     rm_res = remove_worktree(rm_args)
@@ -280,7 +319,9 @@ def rm(branch_names: tuple[str, ...], force: bool):
 
     match rm_res:
         case Err(NotBareRepoErr()):
-            log.error("Cannot find a BARE git repository in the current working directory.")
+            log.error(
+                "Cannot find a BARE git repository in the current working directory."
+            )
             exit(ExitCode.ERR_NOT_BARE_REPO)
 
         case Err(WorktreeNotFoundErr()):
@@ -288,7 +329,9 @@ def rm(branch_names: tuple[str, ...], force: bool):
             exit(ExitCode.ERR_WORKTREE_MISSING)
 
         case Err(UnmergedChangesErr()):
-            log.error("Branch has commits not in the default branch. Use --force to override.")
+            log.error(
+                "Branch has commits not in the default branch. Use --force to override."
+            )
             exit(ExitCode.ERR_UNMERGED)
 
         case Err(WorktreeRemoveErr()):
@@ -306,7 +349,9 @@ def rm(branch_names: tuple[str, ...], force: bool):
 
 @cli.command()
 @click.argument("DIRECTORY", required=True, type=str)
-@click.option("--force", "-f", is_flag=True, default=False, help="Skip confirmation prompt.")
+@click.option(
+    "--force", "-f", is_flag=True, default=False, help="Skip confirmation prompt."
+)
 def destroy(directory: str, force: bool):
     """
     Destroy an entire bare-repo worktree directory.
@@ -331,12 +376,12 @@ def destroy(directory: str, force: bool):
     log = logging.getLogger(__name__)
 
     if not force:
-        _ = click.confirm(f"This will permanently delete '{directory}' and all its contents. Continue?", abort=True)
+        _ = click.confirm(
+            f"This will permanently delete '{directory}' and all its contents. Continue?",
+            abort=True,
+        )
 
-    destroy_args: DestroyArgs = DestroyArgs(
-        directory=directory,
-        force=force
-    )
+    destroy_args = DestroyArgs(directory=directory, force=force)
 
     destroy_res = destroy_repo(destroy_args)
 
@@ -394,4 +439,3 @@ def switch():
 
 if __name__ == "__main__":
     cli()
-

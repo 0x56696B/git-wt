@@ -1,17 +1,15 @@
 import logging
 import shutil
-import pygit2 as pg
-
 from pathlib import Path
-from result import Result, Ok, Err
+
+import pygit2 as pg
+from result import Err, Ok, Result
 
 from .args_destroy import DestroyArgs
 from .result_destroy import DestroyRepoError
-
 from ...errors.destroy_err import DestroyErr
 from ...errors.directory_not_found_err import DirectoryNotFoundErr
 from ...errors.not_bare_repo_err import NotBareRepoErr
-
 from ...helpers.config_file import remove_repo_entry
 
 
@@ -20,14 +18,20 @@ def destroy_repo(destroy_args: DestroyArgs) -> Result[None, DestroyRepoError]:
 
     directory: Path = Path(destroy_args.directory).absolute()
 
-    log.debug("Attempting to destroy bare repo; directory=%s, force=%s", directory, destroy_args.force)
+    log.debug(
+        "Attempting to destroy bare repo; directory=%s, force=%s",
+        directory,
+        destroy_args.force,
+    )
 
     if not directory.exists():
         log.warning("Directory does not exist; directory=%s", directory)
         return Err(DirectoryNotFoundErr())
 
     try:
-        bare_repo: pg.Repository = pg.Repository(str(directory), flags=pg.enums.RepositoryOpenFlag.BARE)
+        bare_repo: pg.Repository = pg.Repository(
+            str(directory), flags=pg.enums.RepositoryOpenFlag.BARE
+        )
     except pg.GitError:
         log.warning("Not a valid bare git repository; directory=%s", directory)
         return Err(NotBareRepoErr())
