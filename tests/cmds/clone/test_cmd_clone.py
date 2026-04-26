@@ -18,10 +18,17 @@ class TestCloneRepository:
 
         result = clone_repository(clone_args)
 
-        assert isinstance(result, Ok)
-        repo: pg.Repository = result.ok_value
-        assert dest.exists()
-        assert repo.is_bare
+        try:
+            assert isinstance(result, Ok)
+            repo: pg.Repository = result.ok_value
+            assert dest.exists()
+            assert repo.is_bare
+        finally:
+            # Explicitly release the pg.Repository handle so libgit2 drops
+            # its file locks before _tmp_path_cleanup runs shutil.rmtree.
+            # Without this, a test failure keeps `result` alive in pytest's
+            # traceback frame, which can silently block directory removal.
+            del result
 
     def test_clone_success_creates_default_worktree(self, local_origin, tmp_path):
         """After clone, the default worktree directory (main/) exists with a .git pointer."""
@@ -30,11 +37,15 @@ class TestCloneRepository:
 
         result = clone_repository(clone_args)
 
-        assert isinstance(result, Ok)
-        worktree_path: Path = dest / "main"
-        assert worktree_path.exists()
-        assert worktree_path.is_dir()
-        assert (worktree_path / ".git").exists()
+        try:
+            assert isinstance(result, Ok)
+            worktree_path: Path = dest / "main"
+            assert worktree_path.exists()
+            assert worktree_path.is_dir()
+            assert (worktree_path / ".git").exists()
+        finally:
+            # Explicitly release the pg.Repository inside result.ok_value.
+            del result
 
     def test_clone_creates_directory_if_not_exists(self, local_origin, tmp_path):
         """Destination that does not exist gets created and clone succeeds."""
@@ -44,9 +55,13 @@ class TestCloneRepository:
         clone_args = CloneArgs(repository_link=local_origin, dest=dest)
         result = clone_repository(clone_args)
 
-        assert isinstance(result, Ok)
-        assert dest.exists()
-        assert dest.is_dir()
+        try:
+            assert isinstance(result, Ok)
+            assert dest.exists()
+            assert dest.is_dir()
+        finally:
+            # Explicitly release the pg.Repository inside result.ok_value.
+            del result
 
     def test_clone_fails_if_dest_is_file(self, local_origin, tmp_path):
         """Destination is an existing file — must return Err(PathCannotBeFile())."""
