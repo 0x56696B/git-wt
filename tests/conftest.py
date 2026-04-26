@@ -42,6 +42,12 @@ def local_origin(tmp_path):
         []
     )
 
+    # Point HEAD at main so the bare clone inherits the correct default branch.
+    # pg.init_repository defaults HEAD to refs/heads/master; without this the
+    # clone copies that broken symbolic ref and dest ends up with no
+    # refs/heads/main — causing KeyError in lookup_reference.
+    source_repo.set_head("refs/heads/main")
+
     # Step 3: clone source as a bare repo (becomes the fake origin)
     bare_path = tmp_path / "origin_bare"
     bare_repo = pg.clone_repository(str( source_path ), str( bare_path ), bare=True)
