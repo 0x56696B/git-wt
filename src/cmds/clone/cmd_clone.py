@@ -24,10 +24,10 @@ def clone_repository(
         clone_args.dest.absolute(),
     )
 
-    if clone_args.dest.is_file(follow_symlinks=True):
+    if clone_args.dest.is_file():
         return Err(PathCannotBeFile())
 
-    if not clone_args.dest.exists(follow_symlinks=True):
+    if not clone_args.dest.exists():
         os.makedirs(clone_args.dest, exist_ok=True)
 
     if any(os.scandir(clone_args.dest)):
