@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Bump version and publish release
+    runs-on: ubuntu-latest
+    if: "!startsWith(github.event.head_commit.message, 'chore: bump version')"
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ------------------------------------------------------------------ #
+      # Determine semver bump type from the merge commit message.           #
+      # Conventional commits:                                               #
+      #   BREAKING CHANGE / !:  -> major                                   #
+      #   feat:                 -> minor                                    #
+      #   anything else         -> patch                                    #
+      # ------------------------------------------------------------------ #
+      - name: Determine bump type
+        id: bump
+        run: |
+          MSG="${{ github.event.head_commit.message }}"
+          if echo "$MSG" | grep -qiE "(BREAKING CHANGE|^[a-z]+(\([^)]*\))?!:)"; then
+            echo "type=major" >> "$GITHUB_OUTPUT"
+          elif echo "$MSG" | grep -qE "^feat(\([^)]*\))?:"; then
+            echo "type=minor" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=patch" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compute new version
+        id: version
+        run: |
+          CURRENT=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          case "${{ steps.bump.outputs.type }}" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+          NEW="${MAJOR}.${MINOR}.${PATCH}"
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "new=$NEW"         >> "$GITHUB_OUTPUT"
+          echo "Bumping $CURRENT -> $NEW (type: ${{ steps.bump.outputs.type }})"
+
+      - name: Bump version in source files
+        run: |
+          NEW="${{ steps.version.outputs.new }}"
+          sed -i "s/^version = \".*\"/version = \"${NEW}\"/" pyproject.toml
+          sed -i "s/@click\.version_option(\"[^\"]*\")/@click.version_option(\"${NEW}\")/" src/main.py
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Hatch
+        run: pip install hatch --quiet
+
+      - name: Build wheel and sdist
+        run: hatch build
+
+      - name: Commit, tag and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml src/main.py
+          git commit -m "chore: bump version ${{ steps.version.outputs.current }} -> ${{ steps.version.outputs.new }}"
+          git tag "v${{ steps.version.outputs.new }}"
+          git push origin main --follow-tags
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.version.outputs.new }}" \
+            --title "v${{ steps.version.outputs.new }}" \
+            --generate-notes \
+            dist/*
