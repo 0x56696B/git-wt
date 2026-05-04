@@ -2,91 +2,112 @@
 
 ![License](https://img.shields.io/github/license/0x56696B/git-wt) ![Language](https://img.shields.io/github/languages/top/0x56696B/git-wt)
 
-**git-wt** is a Git extension designed to simplify the management of Git worktrees, making them easier and more intuitive to use.
+**git-wt** makes Git worktrees a first-class part of your workflow. Clone repos the right way, spin up isolated working environments per branch in seconds, and tear them down just as fast — without remembering a single plumbing command.
+
+---
+
+## Why worktrees?
+
+The standard Git workflow — stash, switch branch, work, switch back, pop stash — gets painful fast. Worktrees let you check out multiple branches simultaneously, each in its own directory. No stashing. No context switching. Work on a hotfix in one terminal window while your feature branch stays untouched in another.
+
+---
 
 ## Features
 
-- **Simplified Worktree Management:** Easily create, remove, and automate worktrees with custom scripts.
-- **Flexible Commands:** Supports `add`, `rm`, and `open` commands tailored for worktree directory management.
-- **Configuration and Caching:** Allows per-repository configuration and caching for more efficient workflows.
+**Bare-repo cloning.** `git wt clone` sets up the correct repository structure automatically. No manual `git clone --bare` and no fiddling with `origin` HEAD refs.
+
+**Ignored-file propagation.** When you create a new worktree, `git-wt` copies git-ignored files from the source branch — `.env`, `node_modules`, compiled outputs — so the new branch is immediately runnable. Control which patterns to skip via `--exclude` or the config file.
+
+**Unmerged-commit protection.** `git wt rm` checks whether the branch has commits that haven't landed in the default branch yet. It won't delete anything until you confirm or pass `--force`.
+
+**Per-repo lifecycle hooks.** Configure commands that run automatically after every `add` or `rm`:
+
+```bash
+git wt config --add-command "npm install" --add-command "cp .env.example .env"
+git wt config --remove-command "docker compose down"
+```
+
+**Branch name sanitisation.** Branches like `feat/my-feature` are stored as `feat-my-feature` on disk, avoiding unintended subdirectory nesting.
+
+---
+
+## Command reference
+
+| Command | Description |
+|---------|-------------|
+| `git wt clone <repo> <dir>` | Clone as a bare repo and create the default worktree. |
+| `git wt add <branch> [from]` | Create a new worktree, optionally derived from a specific branch. |
+| `git wt pull <branch>` | Fetch a remote branch and create a worktree for it. |
+| `git wt rm <branch...>` | Remove one or more worktrees. Guards against unmerged work. |
+| `git wt destroy <dir>` | Delete an entire bare repo and all its worktrees. |
+| `git wt config [options]` | View or update per-repository settings. |
+
+Run `git wt <command> --help` for the full options of any command.
+
+---
+
+## Workflow
+
+```bash
+# Clone and get to work immediately
+git wt clone git@github.com:acme/my-app.git ~/projects/my-app
+cd ~/projects/my-app/main
+
+# New feature? Spin up a worktree — .env and node_modules already copied over
+git wt add feat/auth main
+
+# A colleague pushed a branch? Pull it as a worktree
+git wt pull feat/payment-service
+
+# Done with a branch? Remove it (merge check included)
+git wt rm feat-auth
+git wt rm feat-auth --force    # skip the merge check
+git wt rm feat-a feat-b feat-c # remove several at once
+
+# Project wrapped up? Tear the whole thing down
+git wt destroy ~/projects/my-app
+```
+
+---
+
+## Per-repo configuration
+
+`git wt config` stores settings per repository in `~/.gitconfig_wt`. Set once, applied every time:
+
+```bash
+# Skip these when copying ignored files to a new worktree
+git wt config -e "node_modules" -e "dist" -e ".turbo"
+
+# Set the default branch for merge checks
+git wt config --default-branch develop
+
+# View current settings for this repo
+git wt config --list
+```
+
+---
+
+## Requirements
+
+- Python ≥ 3.12
+- An SSH agent with your key loaded (`ssh-add`) for `clone` and `pull`
+
+---
 
 ## Installation
 
-To install `git-wt`, clone the repository and install with pip:
-
 ```bash
-git clone https://github.com/0x56696B/git-wt.git
-cd git-wt
-pip install .
+pipx install https://github.com/0x56696B/git-wt/archive/refs/tags/v1.0.1.tar.gz
 ```
 
-For development:
+Once installed, Git picks it up automatically:
 
 ```bash
-pip install -e ".[dev]"
+git wt --help
 ```
 
-## Usage
-
-The main commands available with git-wt include:
-
-```bash
-git wt add <worktree-name>     # Adds a new worktree
-git wt rm <worktree-name>      # Removes an existing worktree
-git wt open <worktree-name>    # Opens a specified worktree
-```
-
-Additional Options:
-Run `git wt --help`` for a full list of commands and options.
-Run `git wt <command> --help` for more information regarding a particular command
-
-## Planned features
-
-[x] git wt - Forbid to execute in non-git repo
-
-[x] git wt add - Create a worktree and copy over all hidden files (.env, for example)
-
-[-] git wt rm - Remove a worktree and copy the difference in hidden files (optional, on by default)
-
-[] git wt open - Provide a script, saved per repo in cache, that opens a worktree (new tmux + nvim, opens vscode in worktree, etc)
-
-[x] git wt config - Provide a script, saved per repo in cache, that executes a script after `git wt add` or after `git wt rm`
-
-[] git wt migrate - Possible migrate non-bare repo to bare (if possible)
-
-[-] Caching for main branch and main worktree discovery
-
-[x] A file that saves the config per repo
-
-[x] In the config file, allow to exclude copying of certain git ignored files on `git wt add`
-
-## Shower Thoughts
-
-TODO: Add tracing (rust::tracing)
-
-TODO: Add some kind of rollback mechanism when something fails (libgit2 transactions?)
-
-TODO: Think of maybe using channels to async print stuff to stdout/stderr to avoid colored functions
-
-TODO: Optionally pull main before creation of new worktree
-
-TODO: Make work without main branch present (first time repo)
-
-TODO: Create git-wt pull to pull as bare repo properly
-
-TODO: Make so creation can take place in a branch, but still recognize the bare repo folder (ex: from some-branch branch to be able to create a new one, without showing the "not a bare repo" error)
-
-TODO: Add flag to ignore excluded files in `git-wt add`
-
-FIX: `git wt config -e "node_modules" "cache"` doesn't work, but `git wt config -e "node_modules" -e "cache"` works
-
-TODO: Make `git-wt switch` to run a script in the active worktree (ex: `main` wt runs `docker compose up`, but I can't do the same in another wt, until I `docker compose down` in `main`)
-
-TODO: You can store .env files in the GIT_DIR (main folder with the branches) and symlink them for each branch, so they are always shared
+---
 
 ## License
-This project is licensed under the GPL-3.0 License - see the LICENSE file for details.
 
-## Contact
-Feel free to open an issue for any bug reports or feature requests. Your feedback is valuable!
-
+GPL-3.0 — see `LICENSE`.
