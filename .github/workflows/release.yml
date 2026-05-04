@@ -1,9 +1,7 @@
 name: Release
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  push:
     branches: [main]
 
 concurrency:
@@ -14,7 +12,7 @@ jobs:
   release:
     name: Bump version and publish release
     runs-on: ubuntu-latest
-    if: "github.event.workflow_run.conclusion == 'success' && !startsWith(github.event.workflow_run.head_commit.message, 'chore: bump version')"
+    if: "!startsWith(github.event.head_commit.message, 'chore: bump version')"
 
     permissions:
       contents: write
@@ -35,7 +33,7 @@ jobs:
       - name: Determine bump type
         id: bump
         run: |
-          MSG=$(echo "${{ github.event.workflow_run.head_commit.message }}" | head -1)
+          MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
           if echo "$MSG" | grep -qiE "(BREAKING CHANGE|^[a-z]+(\([^)]*\))?!:)"; then
             echo "type=major" >> "$GITHUB_OUTPUT"
           elif echo "$MSG" | grep -qE "^feat(\([^)]*\))?:"; then
