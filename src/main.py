@@ -40,7 +40,7 @@ from .helpers.logger import setup_logging
 
 
 @click.group()
-@click.version_option("1.0.3")
+@click.version_option("1.0.4")
 def cli():
     """A git-worktree extension to make using worktrees a pain of the past"""
     setup_logging()
