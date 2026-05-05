@@ -13,6 +13,8 @@ from .cmds.config.args_config import ConfigArgs
 from .cmds.config.cmd_config import configure
 from .cmds.destroy.args_destroy import DestroyArgs
 from .cmds.destroy.cmd_destroy import destroy_repo
+from .cmds.list.args_list import ListArgs
+from .cmds.list.cmd_list import list_worktrees
 from .cmds.pull.args_pull import PullArgs
 from .cmds.pull.cmd_pull import pull_worktree
 from .cmds.rm.args_rm import RmArgs
@@ -454,6 +456,48 @@ def pull(branch_name: str):
 
         case Ok(None):
             log.info("Successfully pulled branch and created worktree; branch_name=%s", branch_name)
+            exit(ExitCode.SUCCESS)
+
+
+@cli.command(name="list")
+@click.option("--verbose", "-v", is_flag=True, default=False, help="Show worktree paths alongside names.")
+def list_cmd(verbose: bool):
+    """List all worktrees in the current bare repository."""
+
+    log = logging.getLogger(__name__)
+
+    list_args = ListArgs(current_working_dir=os.getcwd())
+
+    list_res = list_worktrees(list_args)
+
+    log.debug("Worktree list result; result=%s", list_res)
+
+    match list_res:
+        case Err(NotBareRepoErr()):
+            log.error("Cannot find a BARE git repository in the current working directory.")
+            exit(ExitCode.ERR_NOT_BARE_REPO)
+
+        case Err(_):
+            log.fatal("Something has gone horribly wrong. Aborting immediately!")
+            exit(ExitCode.ERR_GENERAL)
+
+        case Ok([]):
+            click.echo("No worktrees found.")
+            exit(ExitCode.SUCCESS)
+
+        case Ok(worktrees):
+            col_width = max(len(wt.name) for wt in worktrees) + 2
+            for wt in worktrees:
+                tags: list[str] = []
+                if wt.is_prunable:
+                    tags.append("[prunable]")
+                if wt.has_unmerged_commits:
+                    tags.append("[unmerged]")
+                tag_str = "  " + " ".join(tags) if tags else ""
+                if verbose:
+                    click.echo(f"{wt.name:<{col_width}}{wt.path}{tag_str}")
+                else:
+                    click.echo(f"{wt.name}{tag_str}")
             exit(ExitCode.SUCCESS)
 
 
