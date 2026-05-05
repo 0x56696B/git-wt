@@ -86,11 +86,7 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
         )
 
     elif analysis & pg.GIT_MERGE_ANALYSIS_FASTFORWARD:
-        # NOTE: Untested!
-        # Move HEAD and working tree forward
-        _ = bare_repo.checkout_tree(treeish=bare_repo.get(remote_branch.id))  # pyright: ignore[reportUnknownMemberType]
         bare_repo.lookup_reference(f"refs/heads/{add_args.derive_from_branch}").set_target(remote_branch.id)
-        bare_repo.head.set_target(remote_branch.id)
 
         log.info("Fast-forwarded ref branch; fast_forwarded=%s", remote_branch.id)
 
