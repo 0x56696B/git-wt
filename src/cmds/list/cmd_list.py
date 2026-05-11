@@ -60,12 +60,14 @@ def _has_unmerged_commits(repo: pg.Repository, git_dir: str, branch_name: str) -
 
     ensure_res = ensure_config_exists()
     match ensure_res:
-        case Err(_):
+        case Err(e):
+            log.warning("Config not found, defaulting to main; error=%s", e)
             default_branch = "main"
         case Ok(config_path):
             read_res = read_config(config_path)
             match read_res:
-                case Err(_):
+                case Err(e):
+                    log.warning("Failed to read config, defaulting to main; error=%s", e)
                     default_branch = "main"
                 case Ok(config):
                     default_branch = config.get(git_dir, "default_branch_name", fallback="main")
