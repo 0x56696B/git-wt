@@ -486,7 +486,7 @@ def list_cmd(verbose: bool):
             exit(ExitCode.SUCCESS)
 
         case Ok(worktrees):
-            col_width = max(len(wt.name) for wt in worktrees) + 2
+            col_width = max(len(wt.name) for wt in worktrees) + 2 if verbose else 0
             for wt in worktrees:
                 tags: list[str] = []
                 if wt.is_prunable:
