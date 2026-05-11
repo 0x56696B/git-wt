@@ -34,7 +34,14 @@ def list_worktrees(list_args: ListArgs) -> Result[list[WorktreeInfo], ListWorktr
             log.warning("Failed to look up worktree, skipping; name=%s, error=%s", name, e)
             continue
 
-        has_unmerged: bool = _has_unmerged_commits(bare_repo, git_dir, name)
+        try:
+            wt_repo: pg.Repository = pg.Repository(wt.path)
+            actual_branch: str = wt_repo.head.shorthand
+        except (KeyError, pg.GitError) as e:
+            log.warning("Could not resolve branch for worktree; name=%s, error=%s", wt.name, e)
+            actual_branch = wt.name  # fallback to name
+
+        has_unmerged: bool = _has_unmerged_commits(bare_repo, git_dir, actual_branch)
 
         worktrees.append(
             WorktreeInfo(
