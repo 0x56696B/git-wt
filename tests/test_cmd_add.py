@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pygit2 as pg
@@ -76,9 +77,11 @@ class TestAddWorktreeFastForward:
 
         # Detach HEAD at the first commit so main is one ahead (FASTFORWARD scenario)
         # pygit2 1.19.2 has no set_head_detached; write the HEAD file directly
-        import os
         with open(os.path.join(str(bare), "HEAD"), "w") as f:
-            f.write(str(parent.id))
+            f.write(str(parent.id) + "\n")
+
+        # Capture target OID (tip of main after second commit) before calling add_worktree
+        target_oid: pg.Oid = repo.lookup_reference("refs/heads/main").peel(pg.Commit).id
 
         monkeypatch.chdir(str(bare))
 
@@ -94,3 +97,5 @@ class TestAddWorktreeFastForward:
         # Must succeed — old code raised GitError from checkout_tree on bare repo
         assert isinstance(result, Ok)
         assert (bare / "feat-y").exists()
+        # Verify FASTFORWARD branch was taken: refs/heads/main must point at target_oid
+        assert repo.lookup_reference("refs/heads/main").peel(pg.Commit).id == target_oid
