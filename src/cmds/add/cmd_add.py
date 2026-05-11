@@ -88,7 +88,10 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
     elif analysis & pg.GIT_MERGE_ANALYSIS_FASTFORWARD:
         bare_repo.lookup_reference(f"refs/heads/{add_args.derive_from_branch}").set_target(remote_branch.id)
 
-        log.info("Fast-forwarded ref branch; fast_forwarded=%s", remote_branch.id)
+        # TODO: fetch not yet wired in — remote_branch is peeled from the same ref being updated,
+        # so set_target() above is a no-op (ref and target are always equal until fetch runs).
+        # Uncomment and update this log line once fetch is implemented.
+        # log.info("Fast-forwarded ref branch; fast_forwarded=%s", remote_branch.id)
 
     else:
         # True merge required — pygit2 can do it but you'd need to handle conflicts
