@@ -82,8 +82,9 @@ def _has_unmerged_commits(repo: pg.Repository, git_dir: str, branch_name: str) -
         branch_commit: pg.Commit = repo.lookup_reference(f"refs/heads/{branch_name}").peel(pg.Commit)
         default_commit: pg.Commit = repo.lookup_reference(f"refs/heads/{default_branch}").peel(pg.Commit)
 
-        merge_base: pg.Oid = repo.merge_base(branch_commit.id, default_commit.id)
-
+        merge_base: pg.Oid | None = repo.merge_base(branch_commit.id, default_commit.id)
+        if merge_base is None:
+            return False
         return merge_base != branch_commit.id
 
     except (KeyError, pg.GitError) as e:
