@@ -97,5 +97,5 @@ class TestAddWorktreeFastForward:
         # Must succeed — old code raised GitError from checkout_tree on bare repo
         assert isinstance(result, Ok)
         assert (bare / "feat-y").exists()
-        # Verify FASTFORWARD branch was taken: refs/heads/main must point at target_oid
+        # Non-crash check — set_target is a no-op until fetch is wired (see TODO in cmd_add.py FF block)
         assert repo.lookup_reference("refs/heads/main").peel(pg.Commit).id == target_oid

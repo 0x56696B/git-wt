@@ -88,9 +88,10 @@ def add_worktree(add_args: AddArgs) -> Result[None, AddWorktreeError]:
     elif analysis & pg.GIT_MERGE_ANALYSIS_FASTFORWARD:
         bare_repo.lookup_reference(f"refs/heads/{add_args.derive_from_branch}").set_target(remote_branch.id)
 
-        # TODO: fetch not yet wired in — remote_branch is peeled from the same ref being updated,
-        # so set_target() above is a no-op (ref and target are always equal until fetch runs).
-        # Uncomment and update this log line once fetch is implemented.
+        # TODO: this whole block needs rewriting when fetch lands.
+        # remote_branch must be peeled from refs/remotes/origin/{branch} (remote-tracking ref),
+        # not refs/heads/{branch} (local ref), which is always already at target — making
+        # set_target() a structural no-op regardless of whether fetch runs.
         # log.info("Fast-forwarded ref branch; fast_forwarded=%s", remote_branch.id)
 
     else:
