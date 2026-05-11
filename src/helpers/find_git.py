@@ -7,7 +7,7 @@ def get_git_dir(start: str) -> str | None:
 
     # If git is a file, then we're in a branch of the worktree
     if git.is_file():
-        return str(path.parent)
+        return str(path.parent.absolute())
 
     # If git is a dir, then we're not in a bare repo
     if git.is_dir():
